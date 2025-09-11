@@ -29,3 +29,20 @@ class LoginSchema(BaseModel):
 
     class Config:
         from_attributes = True
+
+class CriarFilaSchema(BaseModel):
+    nome: str
+    descricao: str
+    estabelecimento_id: int
+
+    class Config:
+        from_attributes = True
+
+class UsuariosNaFilaSchema(BaseModel):
+    usuario_id: int
+    fila_id: int
+    ordem: int
+    status: str
+
+    class Config:
+        from_attributes = True

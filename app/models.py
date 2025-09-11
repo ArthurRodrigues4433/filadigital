@@ -94,7 +94,7 @@ class UsuariosNaFila(Base):
     usuario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False)
     fila_id = Column(Integer, ForeignKey("filas.id"), nullable=False)
     ordem = Column(Integer, nullable=False)  # posição na fila
-    status = Column(String, default="aguardando")  # aguardando, atendido, cancelado
+    status = Column(String, default="aguardando""atendido")  # aguardando, atendido
     horario_entrada = Column(DateTime, default=datetime.utcnow)
 
     # Relacionamentos

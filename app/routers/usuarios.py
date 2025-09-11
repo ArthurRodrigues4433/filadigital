@@ -10,13 +10,14 @@ from fastapi.security import OAuth2PasswordRequestForm #type: ignore
 
 router = APIRouter()
 
+# função para criar o token
 def criar_token(usuario_id, duracao_token=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)):
     data_expiracao = datetime.now(timezone.utc) + duracao_token
     dic_info = {"sub": str(usuario_id), "exp": data_expiracao}
     enconded_jwt = jwt.encode(dic_info, SECRET_KEY, ALGORITHM) #type: ignore
     return enconded_jwt
 
-
+# função para autenticar o usuário
 def autenticar_usuario(email: str, senha: str, session: Session):
     usuario = session.query(Usuario).filter(Usuario.email==email).first() #type: ignore
     if not usuario:
@@ -25,12 +26,12 @@ def autenticar_usuario(email: str, senha: str, session: Session):
         return False
     return usuario
 
-
+# rota protegida, só acessível com token
 @router.get("/")
 async def home():
     return {"message": "Usuário autenticado com sucesso!"}
 
-
+# rota para registrar novo usuário
 @router.post("/registrar")
 async def registrar_usuario(usuario_schema: UsuarioSchema , session: Session = Depends(pegar_sessao)):
     usuario = session.query(Usuario).filter(Usuario.email==usuario_schema.email).first() #type: ignore
@@ -43,7 +44,7 @@ async def registrar_usuario(usuario_schema: UsuarioSchema , session: Session = D
         session.commit()
         return {"message": f"Usuário registrado com sucesso!{usuario_schema.email}"}
     
-
+# rota para login e criação do token
 @router.post("/login")
 async def login(login_schema: LoginSchema, session: Session =  Depends(pegar_sessao)):
     usuario = autenticar_usuario(login_schema.email, login_schema.senha, session)
@@ -71,7 +72,7 @@ async def login_form(dados_formulario: OAuth2PasswordRequestForm = Depends(), se
             "token_type": "bearer"
             }
 
-
+# rota para renovar o token
 @router.get("/refresh")
 async def use_refresh_token(usuario: Usuario = Depends(verificar_token)):
     access_token = criar_token(usuario.id)
