@@ -7,9 +7,8 @@ from app.models import Fila, UsuariosNaFila, Usuario
 router = APIRouter(dependencies=[Depends(verificar_token)])
 
 @router.get("/")
-async def fila():
-
-    return {"message": "API de Estabelecimentos funcionando!"}
+async def filas_root():
+    return {"message": "API de Filas funcionando!"}
 
 # Rota para criar uma fila
 @router.post("/criar-fila")
@@ -36,7 +35,7 @@ async def apagar_fila(fila_id: int, session: Session = Depends (pegar_sessao), c
     verificar_dono_fila(fila, current_user)
     
     # deletar os usuarios da fila
-    usuarios = session.query(UsuariosNaFila).filter(UsuariosNaFila.fila_id == fila_id).all()
+    usuarios = session.query(UsuariosNaFila).filter(UsuariosNaFila.fila_id == fila_id).all() #type: ignore
     for usuario in usuarios:
         session.delete(usuario)
 
@@ -69,17 +68,17 @@ async def chamar_proximo_usuario(fila_id: int, session: Session = Depends(pegar_
 # Para entrar usuarios na fila:
 @router.post("/entrar-na-fila")
 async def entrar_na_fila(usuarios_na_fila_schema: UsuariosNaFilaSchema, session: Session = Depends(pegar_sessao), current_user: Usuario = Depends(verificar_token)):
-    fila = session.query(Fila).filter(Fila.id == usuarios_na_fila_schema.fila.id)
+    fila = session.query(Fila).filter(Fila.id == usuarios_na_fila_schema.fila.id) #type: ignore
     if not fila:
         raise HTTPException(status_code=404, detail="Fila não encontrada")
     
-    impedir_dono_entrar(fila, current_user)
+    impedir_dono_entrar(fila, current_user) #type: ignore
 
-    ordem = calcular_ordem(fila, session) #calcula a ordem automaticamente
+    ordem = calcular_ordem(fila, session) #calcula a ordem automaticamente #type: ignore
     
     nova_entrada = UsuariosNaFila(
-        usuario_id=current_user.id,
-        fila_id=fila.id,
+        usuario_id=current_user.id, #type: ignore
+        fila_id=fila.id, #type: ignore
         ordem=ordem,
         status="aguardando"
     )
@@ -88,7 +87,14 @@ async def entrar_na_fila(usuarios_na_fila_schema: UsuariosNaFilaSchema, session:
     session.commit()
 
     return {
-        "message": f"Você entrou na fila {fila.id} com sucesso!",
+        "message": f"Você entrou na fila {fila.id} com sucesso!", #type: ignore
         "ordem_na_fila": ordem,
         "pessoas_na_frente": ordem - 1
     }
+
+
+#rodar o test
+'''
+$env:PYTHONPATH="."
+pytest ../tests/ --disable-warnings -v
+'''

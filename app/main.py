@@ -28,3 +28,10 @@ app.include_router(filas.router, prefix="/filas", tags=["Filas"])
 # para rodar o servidor: uvicorn app.main:app --reload
 
 #ativar ambiente virtual: .\venv\Scripts\activate
+
+'''
+---testa o codigo---
+
+$env:PYTHONPATH="."
+pytest tests/ --disable-warnings -v
+'''
