@@ -1,8 +1,12 @@
 # 📲 FilaDigital
 
+![License](https://img.shields.io/badge/license-MIT-green)
+![Python](https://img.shields.io/badge/python-3.12-blue)
+![FastAPI](https://img.shields.io/badge/framework-FastAPI-009688)
+
 **FilaDigital** é um sistema de gerenciamento de filas para estabelecimentos, desenvolvido com **Python** e **FastAPI**, com foco em melhorar o atendimento ao público e reduzir aglomerações. O projeto permite que usuários entrem em filas virtualmente, acompanhem seu progresso em tempo real e sejam atendidos com mais conforto e segurança.
 
-> 💡 Este projeto foi criado com o objetivo de facilitar o controle de filas em ambientes físicos, especialmente durante períodos de restrição sanitária, como a pandemia. Ele pode ser adaptado para diversos tipos de estabelecimentos — bancos, clínicas, restaurantes, órgãos públicos e mais.
+> 💡 Ideal para clínicas, bancos, restaurantes e qualquer lugar que precise organizar o fluxo de atendimento. O app foi criado para minimizar aglomerações e otimizar o tempo de espera dos clientes.
 
 
 ## 🚀 Funcionalidades
@@ -17,13 +21,13 @@
 
 ## 🛠️ Tecnologias utilizadas
 
-- **Python 3.12**
-- **FastAPI** — framework web moderno e rápido
-- **Uvicorn** — servidor ASGI para rodar a aplicação
-- **Pytest** — para testes automatizados
-- **SQLite** — banco de dados leve e fácil de configurar
-- **Pydantic** — para validação de dados
-- **HTTPBearer** — autenticação via token JWT
+- Python 3.12
+- FastAPI
+- Uvicorn
+- Pytest
+- SQLite
+- Pydantic
+- JWT (JSON Web Tokens)
 
 
 ## 📦 Instalação e execução
@@ -49,12 +53,88 @@ A aplicação estará disponível em `http://127.0.0.1:8000`.
 
 ## 📚 Documentação da API
 
-Após iniciar o servidor, acesse:
+Acesse a documentação interativa gerada automaticamente pelo FastAPI:
 
-- **Swagger UI**: [`http://127.0.0.1:8000/docs`](http://127.0.0.1:8000/docs)
-- **Redoc**: [`http://127.0.0.1:8000/redoc`](http://127.0.0.1:8000/redoc)
+- [Swagger UI](http://127.0.0.1:8000/docs)
+- [Redoc](http://127.0.0.1:8000/redoc)
 
-Essas interfaces permitem testar os endpoints diretamente no navegador.
+
+## 📡 Exemplos de requisições da API
+
+Abaixo estão alguns exemplos de como interagir com a API usando `curl`, Postman ou Insomnia.
+
+### 🔐 Autenticação
+
+#### Registrar usuário
+
+```http
+POST /usuarios/registrar
+Content-Type: application/json
+
+{
+  "nome": "Arthur",
+  "email": "arthur@email.com",
+  "senha": "123456"
+}
+```
+
+#### Login
+
+```http
+POST /usuarios/login
+Content-Type: application/json
+
+{
+  "email": "arthur@email.com",
+  "senha": "123456"
+}
+```
+
+> 🔑 A resposta inclui um token JWT que deve ser usado nas próximas requisições protegidas.
+
+
+### 🏢 Estabelecimentos
+
+#### Criar estabelecimento
+
+```http
+POST /estabelecimentos/
+Authorization: Bearer <seu_token>
+Content-Type: application/json
+
+{
+  "nome": "Clínica Saúde",
+  "descricao": "Atendimento médico geral"
+}
+```
+
+#### Listar estabelecimentos
+
+```http
+GET /estabelecimentos/
+```
+
+
+### 📋 Filas
+
+#### Entrar na fila
+
+```http
+POST /filas/entrar
+Authorization: Bearer <seu_token>
+Content-Type: application/json
+
+{
+  "id_estabelecimento": 1
+}
+```
+
+#### Ver posição na fila
+
+```http
+GET /filas/minha-posicao
+Authorization: Bearer <seu_token>
+```
 
 
 ## 🧪 Executando os testes
@@ -82,7 +162,7 @@ filadigital/
 │   └── test_estabelecimentos.py
 ├── requirements.txt
 ├── README.md
-└── ...
+└── LICENSE
 ```
 
 
@@ -99,8 +179,9 @@ Contribuições são bem-vindas! Para colaborar:
 
 ## 📄 Licença
 
-Este projeto está sob a licença **MIT**. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+Este projeto está sob a licença **MIT**. Veja o arquivo `LICENSE` para mais detalhes.
 
 
 Feito com 💻 por [Arthur Rodrigues](https://github.com/ArthurRodrigues4433)
+
 
