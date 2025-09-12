@@ -1,0 +1,1 @@
+# Este arquivo pode ficar vazio, serve para o Python reconhecer a pasta como pacote.
