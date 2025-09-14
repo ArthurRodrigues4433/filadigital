@@ -7,8 +7,27 @@ from app.models import Estabelecimento, Usuario
 router = APIRouter(dependencies=[Depends(verificar_token)])
 
 @router.get("/")
-async def estabelecimentos():
-    return {"message": "API de Estabelecimentos funcionando!"}
+async def listar_estabelecimentos(session: Session = Depends(pegar_sessao), current_user: Usuario = Depends(verificar_token)):
+    """
+    Lista todos os estabelecimentos do usuário logado
+    """
+    estabelecimentos = session.query(Estabelecimento).filter(Estabelecimento.usuario_id == current_user.id).all() # type: ignore
+
+    # Retornar dados formatados para o front-end
+    resultado = []
+    for est in estabelecimentos:
+        resultado.append({
+            "id": est.id,
+            "nome": est.nome,
+            "rua": est.rua,
+            "bairro": est.bairro,
+            "cidade": est.cidade,
+            "estado": est.estado,
+            "telefone": est.telefone,
+            "usuario_id": est.usuario_id
+        })
+
+    return {"estabelecimentos": resultado}
 
 
 # Cria o estabelecimento

@@ -45,9 +45,9 @@ def impedir_dono_entrar(fila: Fila, usuario: Usuario):
     
 # Função para calcular ordem da fila
 def calcular_ordem(fila: Fila, session: Session): # type: ignore
-    quantidade = session.query(fila.usuarios.__class__).filter(
-        fila.usuarios.__class__.fila_id == fila.id,
-        fila.usuarios.__class__.status == "aguardando"
+    quantidade = session.query(UsuariosNaFila).filter(
+        UsuariosNaFila.fila_id == fila.id,
+        UsuariosNaFila.status == "aguardando"
     ).count()
     return quantidade + 1
 
@@ -55,19 +55,19 @@ def calcular_ordem(fila: Fila, session: Session): # type: ignore
 def chamar_proximo(fila: Fila, session: Session, usuario: Usuario) -> UsuariosNaFila: # type: ignore
     # Só o dono pode chamar o proximo
     if fila.estabelecimento.usuario_id != usuario.id:
-        raise HTTPException(status_code=404, details="Sem permissão")
+        raise HTTPException(status_code=404, detail="Sem permissão")
     
     # Pega o proximo usuario que está aguardando
     proximo_usuario = session.query(UsuariosNaFila)\
         .filter(
-            UsuariosNaFila.fila.id == fila.id,
-            UsuariosNaFila.status == "aguardando",    
+            UsuariosNaFila.fila_id == fila.id,
+            UsuariosNaFila.status == "aguardando",
         )\
         .order_by(UsuariosNaFila.ordem)\
         .first()
     
     if not proximo_usuario:
-        raise HTTPException(status_code=404, details="Não tem mais usuarios aguardando!")
+        raise HTTPException(status_code=404, detail="Não tem mais usuarios aguardando!")
     
     proximo_usuario.status = "atendido"
     session.commit()

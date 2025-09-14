@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Fila Digital</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <div class="page-container">
+        <!-- Navigation -->
+        <nav class="nav">
+            <div class="container">
+                <a href="dashboard.html" class="nav-brand">Fila Digital</a>
+
+                <div class="nav-center">
+                    <ul>
+                        <li><a href="/dashboard" class="nav-link" data-page="dashboard">Dashboard</a></li>
+                        <li><a href="/estabelecimentos" class="nav-link" data-page="estabelecimentos">Estabelecimentos</a></li>
+                        <li><a href="/minhas-filas" class="nav-link" data-page="minhas-filas">Minhas Filas</a></li>
+                        <li><a href="/minha-posicao" class="nav-link" data-page="minha-posicao">Minha Posição</a></li>
+                    </ul>
+                </div>
+
+                <div class="nav-right">
+                    <button class="btn-logout" id="logoutBtn">Sair</button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="dashboard">
+            <div class="container">
+                <div class="mb-4">
+                    <h1 class="mb-2">Dashboard</h1>
+                    <p class="text-muted">Bem-vindo ao seu painel de controle</p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="dashboard-stats mb-4">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalEstabelecimentos">0</div>
+                        <div class="stat-label">Estabelecimentos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalFilas">0</div>
+                        <div class="stat-label">Minhas Filas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="filasDisponiveis">0</div>
+                        <div class="stat-label">Filas Disponíveis</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="minhaPosicao">-</div>
+                        <div class="stat-label">Minha Posição</div>
+                    </div>
+                </div>
+
+                <!-- Main Grid -->
+                <div class="dashboard-content">
+                    <!-- Meus Estabelecimentos -->
+                    <div class="card card-estabelecimentos">
+                        <div class="card-header">
+                            <h2 class="card-title">🏢 Meus Estabelecimentos</h2>
+                            <button class="btn btn-primary" id="addEstabelecimentoBtn">
+                                ➕ Adicionar
+                            </button>
+                        </div>
+                        <div class="card-content">
+                            <div id="estabelecimentosList" class="text-center">
+                                <div class="loading">
+                                    <div class="spinner"></div>
+                                    <p>Carregando estabelecimentos...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Minhas Filas -->
+                    <div class="card card-filas">
+                        <div class="card-header">
+                            <h2 class="card-title">📋 Minhas Filas</h2>
+                            <button class="btn btn-primary" id="addFilaBtn">
+                                ➕ Criar Fila
+                            </button>
+                        </div>
+                        <div class="card-content">
+                            <div id="filasList" class="text-center">
+                                <div class="loading">
+                                    <div class="spinner"></div>
+                                    <p>Carregando filas...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filas Disponíveis -->
+                    <div class="card card-disponiveis">
+                        <div class="card-header">
+                            <h2 class="card-title">🎯 Filas Disponíveis</h2>
+                        </div>
+                        <div class="card-content">
+                            <div id="filasDisponiveisList" class="text-center">
+                                <div class="loading">
+                                    <div class="spinner"></div>
+                                    <p>Carregando filas disponíveis...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para adicionar estabelecimento -->
+        <div id="estabelecimentoModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title">🏢 Adicionar Estabelecimento</h2>
+                    <button class="modal-close" id="closeEstabelecimentoModal" aria-label="Fechar">
+                        ✕
+                    </button>
+                </div>
+
+                <form id="estabelecimentoForm">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label class="form-label" for="estNome">Nome do Estabelecimento</label>
+                            <input type="text" id="estNome" class="form-control" placeholder="Ex: Restaurante do João" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="estRua">Rua</label>
+                            <input type="text" id="estRua" class="form-control" placeholder="Ex: Rua das Flores, 123" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="estBairro">Bairro</label>
+                            <input type="text" id="estBairro" class="form-control" placeholder="Ex: Centro" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="estCidade">Cidade</label>
+                            <input type="text" id="estCidade" class="form-control" placeholder="Ex: São Paulo" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="estEstado">Estado</label>
+                            <input type="text" id="estEstado" class="form-control" placeholder="Ex: SP" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="estTelefone">Telefone</label>
+                            <input type="text" id="estTelefone" class="form-control" placeholder="Ex: (11) 99999-9999" required>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="cancelEstabelecimentoBtn">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="saveEstabelecimentoBtn">
+                            <span class="loading d-none" id="estabelecimentoLoading">
+                                <div class="spinner"></div>
+                                Salvando...
+                            </span>
+                            <span id="estabelecimentoText">Salvar Estabelecimento</span>
+                        </button>
+                    </div>
+                </form>
+
+                <div id="estabelecimentoMessage" class="mt-3"></div>
+            </div>
+        </div>
+
+        <!-- Modal para adicionar fila -->
+        <div id="filaModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title">📋 Adicionar Fila</h2>
+                    <button class="modal-close" id="closeFilaModal" aria-label="Fechar">
+                        ✕
+                    </button>
+                </div>
+
+                <form id="filaForm">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label class="form-label" for="filaNome">Nome da Fila</label>
+                            <input type="text" id="filaNome" class="form-control" placeholder="Ex: Atendimento Geral" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="filaDescricao">Descrição (Opcional)</label>
+                            <textarea id="filaDescricao" class="form-control form-textarea" placeholder="Descreva o tipo de atendimento desta fila"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="filaEstabelecimento">Estabelecimento</label>
+                            <select id="filaEstabelecimento" class="form-control form-select" required>
+                                <option value="">Selecione um estabelecimento</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="cancelFilaBtn">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="saveFilaBtn">
+                            <span class="loading d-none" id="filaLoading">
+                                <div class="spinner"></div>
+                                Criando...
+                            </span>
+                            <span id="filaText">Criar Fila</span>
+                        </button>
+                    </div>
+                </form>
+
+                <div id="filaMessage" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/app.js"></script>
+    <script src="../js/dashboard.js"></script>
+    <script>
+        // Detectar página ativa na navbar
+        document.addEventListener('DOMContentLoaded', function() {
+            // Detectar página atual baseada na URL
+            const currentPath = window.location.pathname;
+            let currentPage = 'dashboard'; // padrão
+
+            if (currentPath.includes('estabelecimentos')) {
+                currentPage = 'estabelecimentos';
+            } else if (currentPath.includes('minhas-filas')) {
+                currentPage = 'minhas-filas';
+            } else if (currentPath.includes('minha-posicao')) {
+                currentPage = 'minha-posicao';
+            }
+
+            const navLinks = document.querySelectorAll('.nav-link');
+
+            navLinks.forEach(link => {
+                if (link.getAttribute('data-page') === currentPage) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

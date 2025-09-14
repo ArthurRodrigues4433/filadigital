@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Filas - Fila Digital</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <div class="page-container">
+        <!-- Navigation -->
+        <nav class="nav">
+            <div class="container">
+                <a href="dashboard.html" class="nav-brand">Fila Digital</a>
+
+                <div class="nav-center">
+                    <ul>
+                        <li><a href="dashboard.html">Dashboard</a></li>
+                        <li><a href="estabelecimentos.html">Estabelecimentos</a></li>
+                        <li><a href="minhas-filas.html">Minhas Filas</a></li>
+                        <li><a href="#minha-posicao" class="nav-link">Minha Posição</a></li>
+                    </ul>
+                </div>
+
+                <div class="nav-right">
+                    <button class="btn-logout" id="logoutBtn">Sair</button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="dashboard">
+            <div class="container">
+                <div class="mb-4">
+                    <h1 class="mb-2">📋 Gerenciar Filas</h1>
+                    <p class="text-muted">Gerencie suas filas e veja filas disponíveis para entrar</p>
+                </div>
+
+                <!-- Main Grid -->
+                <div class="dashboard-grid">
+                    <!-- Minhas Filas -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">📋 Minhas Filas</h2>
+                            <button class="btn btn-primary" id="addFilaBtn">
+                                ➕ Criar Nova Fila
+                            </button>
+                        </div>
+
+                        <div class="card-content">
+                            <div class="table-responsive">
+                            <table class="table" id="filasTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nome</th>
+                                        <th>Descrição</th>
+                                        <th>Estabelecimento</th>
+                                        <th>Pessoas na Fila</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="filasBody">
+                                    <tr>
+                                        <td colspan="6" class="text-center">
+                                            <div class="loading">
+                                                <div class="spinner"></div>
+                                                Carregando filas...
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Filas Disponíveis -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">🎯 Filas Disponíveis</h2>
+                        </div>
+
+                        <div class="card-content">
+                            <div class="table-responsive">
+                            <table class="table" id="filasDisponiveisTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nome</th>
+                                        <th>Estabelecimento</th>
+                                        <th>Pessoas na Fila</th>
+                                        <th>Ação</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="filasDisponiveisBody">
+                                    <tr>
+                                        <td colspan="5" class="text-center">
+                                            <div class="loading">
+                                                <div class="spinner"></div>
+                                                Carregando filas disponíveis...
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+
+        <!-- Modal para adicionar fila -->
+        <div id="filaModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title">📋 Adicionar Fila</h2>
+                    <button class="modal-close" id="closeFilaModal" aria-label="Fechar">
+                        ✕
+                    </button>
+                </div>
+
+                <form id="filaForm">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label class="form-label" for="filaNome">Nome da Fila</label>
+                            <input type="text" id="filaNome" class="form-control" placeholder="Ex: Atendimento Geral" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="filaDescricao">Descrição (Opcional)</label>
+                            <textarea id="filaDescricao" class="form-control form-textarea" placeholder="Descreva o tipo de atendimento desta fila"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="filaEstabelecimento">Estabelecimento</label>
+                            <select id="filaEstabelecimento" class="form-control form-select" required>
+                                <option value="">Selecione um estabelecimento</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="cancelFilaBtn">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="saveFilaBtn">
+                            <span class="loading d-none" id="filaLoading">
+                                <div class="spinner"></div>
+                                Criando...
+                            </span>
+                            <span id="filaText">Criar Fila</span>
+                        </button>
+                    </div>
+                </form>
+
+                <div id="filaMessage" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/app.js"></script>
+    <script src="../js/filas.js"></script>
+</body>
+</html>

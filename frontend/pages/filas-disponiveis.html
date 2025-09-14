@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Filas Disponíveis - Fila Digital</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <div class="page-container">
+        <!-- Navigation -->
+        <nav class="nav">
+            <div class="container">
+                <a href="dashboard.html" class="nav-brand">Fila Digital</a>
+
+                <div class="nav-center">
+                    <ul>
+                        <li><a href="/dashboard" class="nav-link" data-page="dashboard">Dashboard</a></li>
+                        <li><a href="/estabelecimentos" class="nav-link" data-page="estabelecimentos">Estabelecimentos</a></li>
+                        <li><a href="/minhas-filas" class="nav-link" data-page="minhas-filas">Minhas Filas</a></li>
+                        <li><a href="/minha-posicao" class="nav-link" data-page="minha-posicao">Minha Posição</a></li>
+                    </ul>
+                </div>
+
+                <div class="nav-right">
+                    <button class="btn-logout" id="logoutBtn">Sair</button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="dashboard">
+            <div class="container">
+                <div class="mb-4">
+                    <h1 class="mb-2">🎯 Filas Disponíveis</h1>
+                    <p class="text-muted">Encontre e entre nas filas disponíveis</p>
+                </div>
+
+                <!-- Search/Filter Bar -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3 class="card-title">🔍 Buscar Filas</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="form-group">
+                            <input type="text" id="searchInput" class="form-control" placeholder="Buscar por nome, estabelecimento ou localização...">
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-secondary" id="clearSearchBtn">Limpar</button>
+                            <button class="btn btn-primary" id="searchBtn">Buscar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filas Disponíveis List -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Filas Disponíveis</h2>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="text-muted">Atualizado em tempo real</span>
+                            <button class="btn btn-sm btn-secondary" id="refreshBtn">
+                                🔄 Atualizar
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div id="filasDisponiveisList" class="text-center">
+                            <div class="loading">
+                                <div class="spinner"></div>
+                                <p>Carregando filas disponíveis...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/app.js"></script>
+    <script src="../js/filas-disponiveis.js"></script>
+    <script>
+        // Detectar página ativa na navbar
+        document.addEventListener('DOMContentLoaded', function() {
+            // Detectar página atual baseada na URL
+            const currentPath = window.location.pathname;
+            let currentPage = 'dashboard'; // padrão
+
+            if (currentPath.includes('estabelecimentos')) {
+                currentPage = 'estabelecimentos';
+            } else if (currentPath.includes('minhas-filas') || currentPath.includes('filas-disponiveis')) {
+                currentPage = 'minhas-filas';
+            } else if (currentPath.includes('minha-posicao')) {
+                currentPage = 'minha-posicao';
+            }
+
+            const navLinks = document.querySelectorAll('.nav-link');
+
+            navLinks.forEach(link => {
+                if (link.getAttribute('data-page') === currentPage) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
