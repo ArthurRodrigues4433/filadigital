@@ -116,7 +116,75 @@ async def chamar_proximo_usuario(fila_id: int, session: Session = Depends(pegar_
         "ordem": usuario_chamado.ordem
     }
 
+
+# Rota para carregar a posição do usuario
+@router.get("/minha-posicao")
+async def minha_posicao(session: Session = Depends(pegar_sessao), current_user: Usuario = Depends(verificar_token)):
+    posicoes = session.query(UsuariosNaFila).join(Fila).join(Estabelecimento).filter(
+        UsuariosNaFila.usuario_id == current_user.id, # type: ignore
+        UsuariosNaFila.status == "aguardando" # type: ignore
+    ).all()
+
+    resultado = []
+    for pos in posicoes:
+        resultado.append({
+            "id": pos.id,
+            "fila_nome": pos.fila.nome,
+            "fila_descricao": pos.fila.descricao,
+            "estabelecimento_nome": pos.fila.estabelecimento.nome,
+            "posicao": pos.ordem,
+            "status": pos.status
+        })
+
+    return resultado
+
+
+# Rota para para pegar o historico de filas
+@router.get("/historico")
+async def historico(session: Session = Depends(pegar_sessao), current_user: Usuario = Depends(verificar_token)):
+
+    historico_entradas = session.query(UsuariosNaFila).join(Fila).join(Estabelecimento).filter(
+        UsuariosNaFila.usuario_id == current_user.id, # type: ignore
+        UsuariosNaFila.status != "aguardando" # type: ignore
+    ).all()
     
+    resultado = []
+    for entry in historico_entradas:
+        # Mapear status para o formato esperado pelo frontend
+        if entry.status == "atendido": # type: ignore
+            status_frontend = "concluido"
+        else:
+            status_frontend = "cancelado"  # Para outros status
+        
+        resultado.append({
+            "data_hora": entry.horario_entrada.isoformat(),
+            "fila_nome": entry.fila.nome,
+            "estabelecimento_nome": entry.fila.estabelecimento.nome,
+            "posicao_final": entry.ordem,
+            "status": status_frontend
+        })
+    
+    return resultado
+
+
+# Rota para sair da fila
+@router.delete("/sair-da-fila/{posicao_id}")
+async def sair_da_fila(posicao_id: int, session: Session = Depends(pegar_sessao), current_user: Usuario = Depends(verificar_token)):
+    # Buscar a entrada na fila
+    entrada = session.query(UsuariosNaFila).filter(
+        UsuariosNaFila.id == posicao_id, # type: ignore
+        UsuariosNaFila.usuario_id == current_user.id # type: ignore
+    ).first()
+
+    if not entrada:
+        raise HTTPException(status_code=404, detail="Entrada na fila não encontrada")
+
+    # Remover a entrada
+    session.delete(entrada)
+    session.commit()
+
+    return {"message": "Você saiu da fila com sucesso!"}
+
 
 # Para entrar usuarios na fila:
 @router.post("/entrar-na-fila")
@@ -127,8 +195,21 @@ async def entrar_na_fila(usuarios_na_fila_schema: UsuariosNaFilaSchema, session:
 
     impedir_dono_entrar(fila, current_user) # type: ignore
 
+    # Verificar se o usuário já está nesta fila
+    entrada_existente = session.query(UsuariosNaFila).filter(
+        UsuariosNaFila.usuario_id == current_user.id, # type: ignore
+        UsuariosNaFila.fila_id == fila.id, # type: ignore
+        UsuariosNaFila.status == "aguardando" # type: ignore
+    ).first()
+
+    if entrada_existente:
+        raise HTTPException(
+            status_code=400,
+            detail="Você já está nesta fila. Não é possível entrar na mesma fila mais de uma vez."
+        )
+
     ordem = calcular_ordem(fila, session) # calcula a ordem automaticamente # type: ignore
-    
+
     nova_entrada = UsuariosNaFila(
         usuario_id=current_user.id, #type: ignore
         fila_id=fila.id, #type: ignore

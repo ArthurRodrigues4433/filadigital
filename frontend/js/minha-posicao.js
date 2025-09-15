@@ -43,21 +43,19 @@ document.addEventListener('DOMContentLoaded', function() {
     // Polling para atualização em tempo real
     setInterval(() => {
         loadMinhaPosicao();
+        loadHistorico(); // ALTERAÇÃO: adicionada atualização do histórico automaticamente
         updateLastUpdate();
     }, 30000); // Atualizar a cada 30 segundos
 });
 
 // ===== CARREGAMENTO DE DADOS =====
 
+// ALTERAÇÃO: agora faz fetch da API em vez de arrays vazios
 async function loadMinhaPosicao() {
     try {
-        // Simular dados por enquanto - implementar quando endpoint estiver disponível
         const minhaPosicaoList = document.getElementById('minhaPosicaoList');
 
-        // Dados simulados para demonstração
-        const posicoes = [
-            // Implementar quando endpoint estiver disponível
-        ];
+        const posicoes = await FilaDigital.apiRequest('/filas/minha-posicao');
 
         // Atualizar estatísticas
         updateStats(posicoes);
@@ -89,15 +87,12 @@ async function loadMinhaPosicao() {
     }
 }
 
+// ALTERAÇÃO: agora faz fetch da API em vez de arrays vazios
 async function loadHistorico() {
     try {
-        // Simular dados de histórico
         const historicoList = document.getElementById('historicoList');
 
-        // Dados simulados para demonstração
-        const historico = [
-            // Implementar quando endpoint estiver disponível
-        ];
+        const historico = await FilaDigital.apiRequest('/filas/historico');
 
         if (historico.length === 0) {
             historicoList.innerHTML = `
@@ -235,7 +230,6 @@ function updateStats(posicoes) {
 
 function calcularTempoEstimado(posicao) {
     if (posicao === '-') return '-';
-    // Estimativa simples: 5 minutos por pessoa
     const minutos = posicao * 5;
 
     if (minutos < 60) {
@@ -262,10 +256,11 @@ async function sairDaFila(posicaoId) {
     if (!confirm('Tem certeza que deseja sair desta fila?')) return;
 
     try {
-        // Implementar quando endpoint estiver disponível
-        alert('Funcionalidade "Sair da Fila" será implementada quando o endpoint estiver disponível.');
+        await FilaDigital.apiRequest(`/filas/sair-da-fila/${posicaoId}`, { method: 'DELETE' });
+
+        alert('Você saiu da fila com sucesso!');
         loadMinhaPosicao();
-        updateStats([]);
+        loadHistorico(); // ALTERAÇÃO: atualizar histórico após sair
     } catch (error) {
         alert('Erro ao sair da fila: ' + error.message);
     }
@@ -281,7 +276,6 @@ function setupNavbarNavigation() {
             e.preventDefault();
             const targetId = this.getAttribute('href');
             if (targetId === '#minha-posicao') {
-                // Já estamos na página, não fazer nada
                 return;
             }
         });

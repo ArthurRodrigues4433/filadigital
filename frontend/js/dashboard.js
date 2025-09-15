@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadFilas();
     loadFilasDisponiveis();
     loadMinhaPosicao();
+    updateLastUpdate();
 
     // Funcionalidade de rolagem suave para os cards do topo
     setupCardNavigation();
@@ -26,7 +27,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('addEstabelecimentoBtn').addEventListener('click', () => {
         estabelecimentoModal.classList.add('show');
         document.getElementById('estabelecimentoForm').reset();
-        // Clear any existing messages
         const messageEl = document.getElementById('estabelecimentoMessage');
         if (messageEl) {
             messageEl.style.display = 'none';
@@ -38,7 +38,6 @@ document.addEventListener('DOMContentLoaded', function() {
         loadEstabelecimentosForSelect();
         filaModal.classList.add('show');
         document.getElementById('filaForm').reset();
-        // Clear any existing messages
         const messageEl = document.getElementById('filaMessage');
         if (messageEl) {
             messageEl.style.display = 'none';
@@ -54,6 +53,10 @@ document.addEventListener('DOMContentLoaded', function() {
     function closeFilaModal() {
         filaModal.classList.remove('show');
     }
+
+    // Tornar funções globais para uso em outras funções
+    window.closeEstabelecimentoModal = closeEstabelecimentoModal;
+    window.closeFilaModal = closeFilaModal;
 
     document.getElementById('closeEstabelecimentoModal').addEventListener('click', closeEstabelecimentoModal);
     document.getElementById('closeFilaModal').addEventListener('click', closeFilaModal);
@@ -72,12 +75,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Fechar modal clicando fora
     window.addEventListener('click', (e) => {
-        if (e.target === estabelecimentoModal) {
-            closeEstabelecimentoModal();
-        }
-        if (e.target === filaModal) {
-            closeFilaModal();
-        }
+        if (e.target === estabelecimentoModal) closeEstabelecimentoModal();
+        if (e.target === filaModal) closeFilaModal();
     });
 
     // Formulários
@@ -95,18 +94,22 @@ document.addEventListener('DOMContentLoaded', function() {
     setInterval(() => {
         loadFilas();
         loadFilasDisponiveis();
+        loadMinhaPosicao();
+        updateLastUpdate();
     }, 30000); // Atualizar a cada 30 segundos
 });
+
+// ===== FUNÇÕES DE CARREGAMENTO =====
 
 async function loadEstabelecimentos() {
     try {
         const response = await FilaDigital.apiRequest('/estabelecimentos/');
         const estabelecimentos = response.estabelecimentos || [];
-
         const estabelecimentosList = document.getElementById('estabelecimentosList');
 
         if (estabelecimentos.length === 0) {
             estabelecimentosList.innerHTML = '<p class="text-center text-muted">Nenhum estabelecimento encontrado. Adicione o primeiro!</p>';
+            updateStats(0, null, null, null);
             return;
         }
 
@@ -120,9 +123,7 @@ async function loadEstabelecimentos() {
                     <td>${endereco}</td>
                     <td>${est.telefone}</td>
                     <td>
-                        <button class="btn btn-danger btn-sm" onclick="deleteEstabelecimento(${est.id})">
-                            🗑️ Deletar
-                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteEstabelecimento(${est.id})">🗑️ Deletar</button>
                     </td>
                 </tr>
             `;
@@ -131,7 +132,6 @@ async function loadEstabelecimentos() {
         html += '</tbody></table></div>';
         estabelecimentosList.innerHTML = html;
 
-        // Atualizar estatísticas
         updateStats(estabelecimentos.length, null, null, null);
 
     } catch (error) {
@@ -144,11 +144,11 @@ async function loadFilas() {
     try {
         const response = await FilaDigital.apiRequest('/filas/');
         const filas = response.filas || [];
-
         const filasList = document.getElementById('filasList');
 
         if (filas.length === 0) {
             filasList.innerHTML = '<p class="text-center text-muted">Nenhuma fila encontrada. Crie a primeira!</p>';
+            updateStats(null, 0, null, null);
             return;
         }
 
@@ -161,12 +161,8 @@ async function loadFilas() {
                     <td>${fila.estabelecimento ? fila.estabelecimento.nome : '-'}</td>
                     <td><span class="badge">${fila.pessoas_na_fila}</span></td>
                     <td>
-                        <button class="btn btn-success btn-sm" onclick="chamarProximo(${fila.id})">
-                            📢 Chamar
-                        </button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteFila(${fila.id})">
-                            🗑️ Deletar
-                        </button>
+                        <button class="btn btn-success btn-sm" onclick="chamarProximo(${fila.id})">📢 Chamar</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteFila(${fila.id})">🗑️ Deletar</button>
                     </td>
                 </tr>
             `;
@@ -175,7 +171,6 @@ async function loadFilas() {
         html += '</tbody></table></div>';
         filasList.innerHTML = html;
 
-        // Atualizar estatísticas
         updateStats(null, filas.length, null, null);
 
     } catch (error) {
@@ -188,11 +183,11 @@ async function loadFilasDisponiveis() {
     try {
         const response = await FilaDigital.apiRequest('/filas/disponiveis');
         const filas = response.filas || [];
-
         const filasDisponiveisList = document.getElementById('filasDisponiveisList');
 
         if (filas.length === 0) {
             filasDisponiveisList.innerHTML = '<p class="text-center text-muted">Nenhuma fila disponível no momento.</p>';
+            updateStats(null, null, 0, null);
             return;
         }
 
@@ -205,9 +200,7 @@ async function loadFilasDisponiveis() {
                     <td>${fila.estabelecimento ? fila.estabelecimento.nome : '-'}</td>
                     <td><span class="badge">${fila.pessoas_na_fila}</span></td>
                     <td>
-                        <button class="btn btn-primary btn-sm" onclick="entrarNaFila(${fila.id})">
-                            ➕ Entrar
-                        </button>
+                        <button class="btn btn-primary btn-sm" onclick="entrarNaFila(${fila.id})">➕ Entrar</button>
                     </td>
                 </tr>
             `;
@@ -216,7 +209,6 @@ async function loadFilasDisponiveis() {
         html += '</tbody></table></div>';
         filasDisponiveisList.innerHTML = html;
 
-        // Atualizar estatísticas
         updateStats(null, null, filas.length, null);
 
     } catch (error) {
@@ -229,18 +221,54 @@ async function loadEstabelecimentosForSelect() {
     try {
         const response = await FilaDigital.apiRequest('/estabelecimentos/');
         const estabelecimentos = response.estabelecimentos || [];
-
         const select = document.getElementById('filaEstabelecimento');
+
         select.innerHTML = '<option value="">Selecione um estabelecimento</option>';
+
+        if (estabelecimentos.length === 0) {
+            select.innerHTML += '<option value="" disabled>Nenhum estabelecimento disponível</option>';
+            return;
+        }
 
         estabelecimentos.forEach(est => {
             select.innerHTML += `<option value="${est.id}">${est.nome}</option>`;
         });
+
+        console.log(`Carregados ${estabelecimentos.length} estabelecimentos para seleção`);
     } catch (error) {
         console.error('Erro ao carregar estabelecimentos:', error);
+        const select = document.getElementById('filaEstabelecimento');
+        select.innerHTML = '<option value="">Erro ao carregar estabelecimentos</option>';
     }
 }
 
+async function loadMinhaPosicao() {
+    try {
+        const posicoes = await FilaDigital.apiRequest('/filas/minha-posicao'); // já é um array
+        const minhaPosicaoEl = document.getElementById('minhaPosicao');
+
+        if (!minhaPosicaoEl) return;
+
+        if (posicoes.length === 0) {
+            minhaPosicaoEl.textContent = '-';
+            updateStats(null, null, null, '-');
+            return;
+        }
+
+        // Calcula a média das posições
+        const media = Math.round(posicoes.reduce((acc, p) => acc + p.posicao, 0) / posicoes.length);
+
+        minhaPosicaoEl.textContent = media;
+        updateStats(null, null, null, media);
+
+    } catch (error) {
+        console.error('Erro ao carregar minha posição:', error);
+        const minhaPosicaoEl = document.getElementById('minhaPosicao');
+        if (minhaPosicaoEl) minhaPosicaoEl.textContent = 'Erro';
+    }
+}
+
+// ===== FUNÇÕES DE ESTATÍSTICAS =====
 function updateStats(estabelecimentosCount, filasCount, filasDisponiveisCount, minhaPosicao) {
     if (estabelecimentosCount !== null) {
         const el = document.getElementById('totalEstabelecimentos');
@@ -263,6 +291,7 @@ function updateStats(estabelecimentosCount, filasCount, filasDisponiveisCount, m
     }
 }
 
+// ===== FUNÇÕES DE SALVAMENTO =====
 async function saveEstabelecimento() {
     const nome = document.getElementById('estNome').value;
     const rua = document.getElementById('estRua').value;
@@ -271,38 +300,34 @@ async function saveEstabelecimento() {
     const estado = document.getElementById('estEstado').value;
     const telefone = document.getElementById('estTelefone').value;
 
-    // Obter ID do usuário do token JWT
     const token = FilaDigital.getToken();
-    let usuario_id = 1; // fallback
-
+    let usuario_id = null;
     if (token) {
         try {
             const payload = JSON.parse(atob(token.split('.')[1]));
             usuario_id = payload.sub;
+            console.log('Usuario ID extraído do token:', usuario_id);
         } catch (e) {
             console.warn('Não foi possível extrair ID do usuário do token');
         }
     }
 
+    if (!usuario_id) {
+        FilaDigital.showMessage('estabelecimentoMessage', 'Erro: Usuário não autenticado. Faça login novamente.');
+        return;
+    }
+
     FilaDigital.setLoading('saveEstabelecimentoBtn', true);
 
     try {
-        const data = await FilaDigital.apiRequest('/estabelecimentos/criar-estabelecimento', {
+        await FilaDigital.apiRequest('/estabelecimentos/criar-estabelecimento', {
             method: 'POST',
-            body: JSON.stringify({
-                nome,
-                rua,
-                bairro,
-                cidade,
-                estado,
-                telefone,
-                usuario_id: parseInt(usuario_id)
-            })
+            body: JSON.stringify({ nome, rua, bairro, cidade, estado, telefone, usuario_id: parseInt(usuario_id) })
         });
 
         FilaDigital.showMessage('estabelecimentoMessage', 'Estabelecimento criado com sucesso!', 'success');
         setTimeout(() => {
-            closeEstabelecimentoModal();
+            window.closeEstabelecimentoModal();
             document.getElementById('estabelecimentoForm').reset();
             loadEstabelecimentos();
         }, 1500);
@@ -318,21 +343,39 @@ async function saveFila() {
     const descricao = document.getElementById('filaDescricao').value;
     const estabelecimento_id = document.getElementById('filaEstabelecimento').value;
 
+    if (!estabelecimento_id) {
+        FilaDigital.showMessage('filaMessage', 'Selecione um estabelecimento');
+        return;
+    }
+
+    const token = FilaDigital.getToken();
+    let usuario_id = null;
+    if (token) {
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            usuario_id = payload.sub;
+            console.log('Usuario ID extraído do token para fila:', usuario_id);
+        } catch (e) {
+            console.warn('Não foi possível extrair ID do usuário do token');
+        }
+    }
+
+    if (!usuario_id) {
+        FilaDigital.showMessage('filaMessage', 'Erro: Usuário não autenticado. Faça login novamente.');
+        return;
+    }
+
     FilaDigital.setLoading('saveFilaBtn', true);
 
     try {
-        const data = await FilaDigital.apiRequest('/filas/criar-fila', {
+        await FilaDigital.apiRequest('/filas/criar-fila', {
             method: 'POST',
-            body: JSON.stringify({
-                nome,
-                descricao,
-                estabelecimento_id: parseInt(estabelecimento_id)
-            })
+            body: JSON.stringify({ nome, descricao, estabelecimento_id: parseInt(estabelecimento_id) })
         });
 
         FilaDigital.showMessage('filaMessage', 'Fila criada com sucesso!', 'success');
         setTimeout(() => {
-            closeFilaModal();
+            window.closeFilaModal();
             document.getElementById('filaForm').reset();
             loadFilas();
         }, 1500);
@@ -343,41 +386,12 @@ async function saveFila() {
     }
 }
 
+// ===== FUNÇÕES DE DELETAR =====
 async function deleteEstabelecimento(id) {
     if (!confirm('Tem certeza que deseja deletar este estabelecimento?')) return;
 
-    try {
-        await FilaDigital.apiRequest(`/estabelecimentos/deletar-estabelecimento/${id}`, {
-            method: 'POST'
-        });
-
-        loadEstabelecimentos();
-        alert('Estabelecimento deletado com sucesso!');
-    } catch (error) {
-        alert('Erro ao deletar estabelecimento: ' + error.message);
-    }
-}
-
-async function deleteFila(id) {
-    if (!confirm('Tem certeza que deseja deletar esta fila?')) return;
-
-    try {
-        await FilaDigital.apiRequest(`/filas/apagar-fila/${id}`, {
-            method: 'POST'
-        });
-
-        loadFilas();
-        alert('Fila deletada com sucesso!');
-    } catch (error) {
-        alert('Erro ao deletar fila: ' + error.message);
-    }
-}
-
-async function entrarNaFila(filaId) {
-    // Obter ID do usuário do token JWT
     const token = FilaDigital.getToken();
-    let usuario_id = 1; // fallback
-
+    let usuario_id = null;
     if (token) {
         try {
             const payload = JSON.parse(atob(token.split('.')[1]));
@@ -387,75 +401,163 @@ async function entrarNaFila(filaId) {
         }
     }
 
+    if (!usuario_id) {
+        alert('Erro: Usuário não autenticado');
+        return;
+    }
+
+    try {
+        await FilaDigital.apiRequest(`/estabelecimentos/deletar-estabelecimento/${id}`, { method: 'POST' });
+        loadEstabelecimentos();
+        loadFilas(); // Recarregar filas após deletar estabelecimento
+        alert('Estabelecimento deletado com sucesso!');
+    } catch (error) {
+        alert('Erro ao deletar estabelecimento: ' + error.message);
+    }
+}
+
+async function deleteFila(id) {
+    if (!confirm('Tem certeza que deseja deletar esta fila?')) return;
+
+    const token = FilaDigital.getToken();
+    let usuario_id = null;
+    if (token) {
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            usuario_id = payload.sub;
+        } catch (e) {
+            console.warn('Não foi possível extrair ID do usuário do token');
+        }
+    }
+
+    if (!usuario_id) {
+        alert('Erro: Usuário não autenticado');
+        return;
+    }
+
+    try {
+        await FilaDigital.apiRequest(`/filas/apagar-fila/${id}`, { method: 'POST' });
+        loadFilas();
+        loadFilasDisponiveis(); // Recarregar filas disponíveis após deletar fila
+        alert('Fila deletada com sucesso!');
+    } catch (error) {
+        alert('Erro ao deletar fila: ' + error.message);
+    }
+}
+
+// ===== FUNÇÕES DE INTERAÇÃO COM FILAS =====
+async function entrarNaFila(filaId) {
+    const token = FilaDigital.getToken();
+    let usuario_id = null;
+    if (token) {
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            usuario_id = payload.sub;
+        } catch (e) {
+            console.warn('Não foi possível extrair ID do usuário do token');
+        }
+    }
+
+    if (!usuario_id) {
+        alert('Erro: Usuário não autenticado');
+        return;
+    }
+
     try {
         const data = await FilaDigital.apiRequest('/filas/entrar-na-fila', {
             method: 'POST',
             body: JSON.stringify({
                 fila_id: parseInt(filaId),
                 usuario_id: parseInt(usuario_id),
-                ordem: 1, // Será calculada pelo back-end
+                ordem: 1, // será recalculado no backend
                 status: 'aguardando'
             })
         });
 
         alert(`Você entrou na fila! Sua posição: ${data.ordem_na_fila}`);
         loadFilasDisponiveis();
+        loadMinhaPosicao(); // Atualizar posição após entrar na fila
     } catch (error) {
         alert('Erro ao entrar na fila: ' + error.message);
     }
 }
 
 async function chamarProximo(filaId) {
-    try {
-        const data = await FilaDigital.apiRequest(`/filas/${filaId}/chamar-proximo`, {
-            method: 'POST'
-        });
+    const token = FilaDigital.getToken();
+    let usuario_id = null;
+    if (token) {
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            usuario_id = payload.sub;
+        } catch (e) {
+            console.warn('Não foi possível extrair ID do usuário do token');
+        }
+    }
 
+    if (!usuario_id) {
+        alert('Erro: Usuário não autenticado');
+        return;
+    }
+
+    try {
+        const data = await FilaDigital.apiRequest(`/filas/${filaId}/chamar-proximo`, { method: 'POST' });
         alert(`Usuário ${data.message} chamado!`);
         loadFilas();
+        loadMinhaPosicao(); // Atualizar posição após chamar próximo
     } catch (error) {
         alert('Erro ao chamar próximo: ' + error.message);
     }
 }
 
-// ===== FUNCIONALIDADES DE NAVEGAÇÃO =====
+async function sairDaFila(posicaoId) {
+    if (!confirm('Tem certeza que deseja sair desta fila?')) return;
 
-// Configurar navegação para rotas específicas nos cards do topo
+    const token = FilaDigital.getToken();
+    let usuario_id = null;
+    if (token) {
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            usuario_id = payload.sub;
+        } catch (e) {
+            console.warn('Não foi possível extrair ID do usuário do token');
+        }
+    }
+
+    if (!usuario_id) {
+        alert('Erro: Usuário não autenticado');
+        return;
+    }
+
+    try {
+        await FilaDigital.apiRequest(`/filas/sair-da-fila/${posicaoId}`, { method: 'DELETE' });
+        alert('Você saiu da fila com sucesso!');
+        loadMinhaPosicao();
+        loadFilasDisponiveis(); // Recarregar filas disponíveis após sair
+    } catch (error) {
+        alert('Erro ao sair da fila: ' + error.message);
+    }
+}
+
+// ===== FUNÇÕES DE NAVEGAÇÃO =====
 function setupCardNavigation() {
-    // Cards do topo como atalhos para rotas específicas
     const statCards = document.querySelectorAll('.stat-card');
-
     statCards.forEach(card => {
         card.addEventListener('click', function() {
             const label = this.querySelector('.stat-label').textContent.toLowerCase();
-
-            if (label.includes('estabelecimentos')) {
-                window.location.href = 'estabelecimentos.html';
-            } else if (label.includes('filas') && !label.includes('disponíveis')) {
-                window.location.href = 'minhas-filas.html';
-            } else if (label.includes('disponíveis')) {
-                window.location.href = 'filas-disponiveis.html';
-            } else if (label.includes('posição')) {
-                window.location.href = 'minha-posicao.html';
-            }
+            if (label.includes('estabelecimentos')) window.location.href = 'estabelecimentos.html';
+            else if (label.includes('filas') && !label.includes('disponíveis')) window.location.href = 'minhas-filas.html';
+            else if (label.includes('disponíveis')) window.location.href = 'filas-disponiveis.html';
+            else if (label.includes('posição')) window.location.href = 'minha-posicao.html';
         });
 
-        // Adicionar cursor pointer e efeito visual
         card.style.cursor = 'pointer';
-        card.addEventListener('mouseenter', function() {
-            this.style.transform = 'translateY(-4px) scale(1.02)';
-        });
-
-        card.addEventListener('mouseleave', function() {
-            this.style.transform = 'translateY(0) scale(1)';
-        });
+        card.addEventListener('mouseenter', () => card.style.transform = 'translateY(-4px) scale(1.02)');
+        card.addEventListener('mouseleave', () => card.style.transform = 'translateY(0) scale(1)');
     });
 }
 
-// Configurar navegação suave para links da navbar
 function setupNavbarNavigation() {
     const navLinks = document.querySelectorAll('.nav-link');
-
     navLinks.forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
@@ -465,124 +567,32 @@ function setupNavbarNavigation() {
     });
 }
 
-// Função de rolagem suave
 function scrollToSection(target) {
     const element = document.querySelector(target);
     if (element) {
-        const headerOffset = 100; // Offset para compensar o header fixo
+        const headerOffset = 100;
         const elementPosition = element.getBoundingClientRect().top;
         const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-
-        window.scrollTo({
-            top: offsetPosition,
-            behavior: 'smooth'
-        });
+        window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
     }
 }
+// ===== UTILITÁRIOS =====
 
-// ===== CARREGAMENTO DE DADOS =====
-
-// Carregar posição do usuário nas filas
-async function loadMinhaPosicao() {
-    try {
-        // Simular dados por enquanto - implementar quando endpoint estiver disponível
-        const minhaPosicaoList = document.getElementById('minhaPosicaoList');
-
-        // Dados simulados
-        const posicoes = [
-            // Implementar quando endpoint estiver disponível
-        ];
-
-        if (posicoes.length === 0) {
-            minhaPosicaoList.innerHTML = `
-                <div class="text-center py-4">
-                    <div class="text-muted mb-3">
-                        <span style="font-size: 3rem;">📋</span>
-                    </div>
-                    <h4 class="text-muted">Nenhuma fila encontrada</h4>
-                    <p class="text-muted">Você ainda não entrou em nenhuma fila.</p>
-                    <p class="text-muted">Clique em "Filas Disponíveis" acima para ver opções.</p>
-                </div>
-            `;
-        } else {
-            // Renderizar posições quando houver dados
-            renderMinhaPosicao(posicoes);
-        }
-    } catch (error) {
-        console.error('Erro ao carregar posição:', error);
-        document.getElementById('minhaPosicaoList').innerHTML = `
-            <div class="text-center py-4">
-                <div class="text-muted">
-                    <span style="font-size: 2rem;">⚠️</span>
-                    <p>Erro ao carregar sua posição nas filas.</p>
-                </div>
-            </div>
-        `;
-    }
-}
-
-// Renderizar posições do usuário
-function renderMinhaPosicao(posicoes) {
-    const minhaPosicaoList = document.getElementById('minhaPosicaoList');
-
-    if (posicoes.length === 0) {
-        minhaPosicaoList.innerHTML = `
-            <div class="text-center py-4">
-                <div class="text-muted mb-3">
-                    <span style="font-size: 3rem;">📋</span>
-                </div>
-                <h4 class="text-muted">Nenhuma fila encontrada</h4>
-                <p class="text-muted">Você ainda não entrou em nenhuma fila.</p>
-            </div>
-        `;
-        return;
-    }
-
-    let html = '<div class="table-responsive"><table class="table"><thead><tr>';
-    html += '<th>Fila</th><th>Estabelecimento</th><th>Sua Posição</th><th>Status</th><th>Ações</th>';
-    html += '</tr></thead><tbody>';
-
-    posicoes.forEach(posicao => {
-        const statusClass = posicao.status === 'aguardando' ? 'text-warning' :
-                           posicao.status === 'chamado' ? 'text-success' : 'text-muted';
-
-        html += `
-            <tr>
-                <td>${posicao.fila_nome}</td>
-                <td>${posicao.estabelecimento_nome}</td>
-                <td><strong>${posicao.posicao}</strong></td>
-                <td><span class="${statusClass}">${posicao.status}</span></td>
-                <td>
-                    <button class="btn btn-sm btn-danger" onclick="sairDaFila(${posicao.id})">
-                        Sair da Fila
-                    </button>
-                </td>
-            </tr>
-        `;
+function updateLastUpdate() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit'
     });
-
-    html += '</tbody></table></div>';
-    minhaPosicaoList.innerHTML = html;
-}
-
-// ===== FUNÇÕES ADICIONAIS =====
-
-// Sair da fila
-async function sairDaFila(posicaoId) {
-    if (!confirm('Tem certeza que deseja sair desta fila?')) return;
-
-    try {
-        // Implementar quando endpoint estiver disponível
-        alert('Funcionalidade "Sair da Fila" será implementada quando o endpoint estiver disponível.');
-        loadMinhaPosicao(); // Recarregar posições
-    } catch (error) {
-        alert('Erro ao sair da fila: ' + error.message);
+    // Se existir um elemento para mostrar a última atualização
+    const lastUpdateEl = document.getElementById('lastUpdate');
+    if (lastUpdateEl) {
+        lastUpdateEl.textContent = `Última atualização: ${timeString}`;
     }
 }
 
-// ===== FUNÇÕES GLOBAIS =====
+// ===== EXPOSIÇÃO DE FUNÇÕES GLOBAIS =====
 
-// Tornar funções globais para uso em HTML
 window.deleteEstabelecimento = deleteEstabelecimento;
 window.deleteFila = deleteFila;
 window.entrarNaFila = entrarNaFila;
