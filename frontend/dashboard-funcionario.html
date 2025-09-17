@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="https://public-frontend-cos.metadl.com/mgx/img/favicon.png" type="image/png">
+    <title>FilaDigital - Dashboard Funcionário</title>
+    <link rel="stylesheet" href="style/style.css">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <h2>FilaDigital</h2>
+            </div>
+            <div class="nav-menu" id="navMenu">
+                <a href="#" class="nav-link active" onclick="showSection('filas')">Filas</a>
+                <a href="#" class="nav-link" onclick="showSection('historico')">Histórico</a>
+                <a href="../index.html" class="nav-link logout">Sair</a>
+            </div>
+            <div class="nav-toggle" id="navToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="container">
+            <header class="page-header">
+                <h1>Dashboard do Funcionário</h1>
+                <p>Gerencie as filas do seu estabelecimento</p>
+            </header>
+
+            <!-- Seção de Filas -->
+            <section id="filas" class="section active">
+                <div class="section-header">
+                    <h2>Filas do Estabelecimento</h2>
+                    <div class="establishment-info">
+                        <span>Restaurante ABC</span>
+                    </div>
+                </div>
+
+                <div class="employee-queues-grid" id="employeeQueuesGrid">
+                    <!-- Cards de filas serão gerados dinamicamente -->
+                </div>
+            </section>
+
+            <!-- Seção de Histórico -->
+            <section id="historico" class="section">
+                <div class="section-header">
+                    <h2>Histórico de Atendimentos</h2>
+                </div>
+                <div class="service-history" id="serviceHistory">
+                    <!-- Histórico será gerado dinamicamente -->
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Modal de Confirmação para Chamar Próximo -->
+    <div id="callNextModal" class="modal">
+        <div class="modal-content">
+            <h3>Chamar Próximo Cliente</h3>
+            <p id="callNextMessage">Deseja chamar o próximo cliente da fila?</p>
+            <div class="next-client-info">
+                <p><strong>Próximo cliente:</strong> <span id="nextClientName">João Silva</span></p>
+                <p><strong>Posição:</strong> <span id="nextClientPosition">1</span></p>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+                <button class="btn btn-primary" onclick="confirmCallNext()">Chamar</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 FilaDigital. Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <script src="api.js"></script>
+    <script src="scripts/script.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="https://public-frontend-cos.metadl.com/mgx/img/favicon.png" type="image/png">
+    <title>FilaDigital - QR Code</title>
+    <link rel="stylesheet" href="./style/style.css">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <h2>FilaDigital</h2>
+            </div>
+            <div class="nav-menu" id="navMenu">
+                <a href="dashboard-cliente.html" class="nav-link">Voltar</a>
+                <a href="index.html" class="nav-link logout">Sair</a>
+            </div>
+            <div class="nav-toggle" id="navToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="container">
+            <header class="page-header">
+                <h1>QR Code</h1>
+                <p>Escaneie ou gere códigos QR para entrar nas filas</p>
+            </header>
+
+            <div class="qr-tabs">
+                <button class="tab-btn active" onclick="showQRTab('scan')">Escanear QR</button>
+                <button class="tab-btn" onclick="showQRTab('generate')">Gerar QR</button>
+            </div>
+
+            <!-- Aba de Escanear QR -->
+            <section id="scan" class="qr-section active">
+                <div class="qr-scanner">
+                    <div class="scanner-area">
+                        <div class="scanner-frame">
+                            <div class="scanner-line"></div>
+                        </div>
+                        <p>Posicione o QR Code dentro do quadro</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="simulateScan()">Simular Escaneamento</button>
+                </div>
+            </section>
+
+            <!-- Aba de Gerar QR -->
+            <section id="generate" class="qr-section">
+                <div class="qr-generator">
+                    <div class="form-group">
+                        <label for="queueSelect">Selecione a Fila</label>
+                        <select id="queueSelect">
+                            <option value="">Selecione uma fila...</option>
+                            <option value="1">Restaurante ABC - Fila Principal</option>
+                            <option value="2">Loja XYZ - Atendimento</option>
+                            <option value="3">Banco DEF - Caixa</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="generateQR()">Gerar QR Code</button>
+                    
+                    <div class="qr-display" id="qrDisplay" style="display: none;">
+                        <div class="qr-code">
+                            <!-- QR Code simulado -->
+                            <div class="qr-pattern">
+                                <div class="qr-corner tl"></div>
+                                <div class="qr-corner tr"></div>
+                                <div class="qr-corner bl"></div>
+                                <div class="qr-dots">
+                                    <span></span><span></span><span></span><span></span><span></span>
+                                    <span></span><span></span><span></span><span></span><span></span>
+                                    <span></span><span></span><span></span><span></span><span></span>
+                                    <span></span><span></span><span></span><span></span><span></span>
+                                    <span></span><span></span><span></span><span></span><span></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="qr-info">
+                            <h3 id="qrQueueName">Restaurante ABC</h3>
+                            <p>Escaneie este código para entrar na fila</p>
+                            <button class="btn btn-secondary" onclick="shareQR()">Compartilhar</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Modal de Sucesso do Scan -->
+    <div id="scanSuccessModal" class="modal">
+        <div class="modal-content">
+            <div class="success-icon">✓</div>
+            <h3>QR Code Escaneado!</h3>
+            <p>Você foi adicionado à fila:</p>
+            <div class="queue-info">
+                <h4 id="scannedQueueName">Restaurante ABC</h4>
+                <p>Sua posição: <span id="scannedPosition">3</span></p>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-primary" onclick="closeModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 FilaDigital. Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <script src="./api.js"></script>
+    <script src="./scripts/script.js"></script>
+</body>
+
+</html>

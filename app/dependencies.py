@@ -2,7 +2,7 @@ from app.database import engine
 from app.main import SECRET_KEY, ALGORITHM, oauth2_scheme
 from sqlalchemy.orm import sessionmaker, Session #type: ignore
 from fastapi import Depends, HTTPException #type: ignore
-from app.models import Usuario, Fila, UsuariosNaFila, Estabelecimento
+from app.models import Usuario, Fila, UsuariosNaFila, Estabelecimento, Role
 from jose import jwt, JWTError  #type: ignore
 
 # cria uma "fábrica" de sessões
@@ -17,7 +17,7 @@ def pegar_sessao():
 
 def verificar_token(token: str = Depends(oauth2_scheme), session: Session = Depends(pegar_sessao)): #type: ignore
     try:
-        dic_info = jwt.decode(token, SECRET_KEY, ALGORITHM) #type: ignore 
+        dic_info = jwt.decode(token, SECRET_KEY, ALGORITHM) #type: ignore
         usuario_id = int(dic_info.get("sub")) #type: ignore
     except JWTError:
         raise HTTPException(status_code=401, detail="Acesso Negado, Verifique a validade do token!")
@@ -30,7 +30,7 @@ def verificar_token(token: str = Depends(oauth2_scheme), session: Session = Depe
 
 # Função para verificar o dono do estabelecimento
 def verificar_dono_estabelecimento(estabelecimento: Estabelecimento, usuario: Usuario):
-    if estabelecimento.usuario_id != usuario.id:
+    if estabelecimento.usuario_id != usuario.id: #type: ignore
         raise HTTPException(status_code=403, detail="Você não tem permissão para apagar este estabelecimento")
 
 # Função para verificar o dono da fila
@@ -38,10 +38,12 @@ def verificar_dono_fila(fila: Fila, usuario: Usuario):
     if fila.estabelecimento.usuario_id != usuario.id:
         raise HTTPException(status_code=403, detail="Sem permissão")
 
-# Função para inpedir do dono entrar na fila 
-def impedir_dono_entrar(fila: Fila, usuario: Usuario):
-    if fila.estabelecimento.usuario_id == usuario.id:
+# Função para impedir owner ou employee entrar na fila própria
+def impedir_owner_employee_entrar(fila: Fila, usuario: Usuario):
+    if usuario.role == Role.owner and fila.estabelecimento.usuario_id == usuario.id: #type: ignore
         raise HTTPException(status_code=403, detail="Dono do estabelecimento não pode entrar na própria fila")
+    elif usuario.role == Role.employee and usuario.establishment_id == fila.estabelecimento_id: #type: ignore
+        raise HTTPException(status_code=403, detail="Funcionário não pode entrar na fila do próprio estabelecimento")
     
 # Função para calcular ordem da fila
 def calcular_ordem(fila: Fila, session: Session): # type: ignore
@@ -73,4 +75,46 @@ def chamar_proximo(fila: Fila, session: Session, usuario: Usuario) -> UsuariosNa
     session.commit()
 
     return proximo_usuario
+
+# Função para verificar se o usuário tem um role específico
+def require_role(required_role: Role):
+    def role_checker(usuario: Usuario = Depends(verificar_token)):
+        if usuario.role != required_role: #type: ignore
+            raise HTTPException(status_code=403, detail=f"Acesso negado. Role necessário: {required_role.value}")
+        return usuario
+    return role_checker
+
+# Função para verificar se o usuário é owner ou employee do estabelecimento
+def require_establishment_access(estabelecimento_id: int):
+    def access_checker(usuario: Usuario = Depends(verificar_token), session: Session = Depends(pegar_sessao)): #type: ignore
+        if usuario.role == Role.owner: #type: ignore
+            estabelecimento = session.query(Estabelecimento).filter(Estabelecimento.id == estabelecimento_id).first()
+            if not estabelecimento or estabelecimento.usuario_id != usuario.id:
+                raise HTTPException(status_code=403, detail="Acesso negado ao estabelecimento")
+        elif usuario.role == Role.employee: #type: ignore
+            if usuario.establishment_id != estabelecimento_id: #type: ignore
+                raise HTTPException(status_code=403, detail="Acesso negado ao estabelecimento")
+        else:
+            raise HTTPException(status_code=403, detail="Acesso negado")
+        return usuario
+    return access_checker
+
+# Função para verificar acesso a fila (owner do estabelecimento ou employee)
+def require_queue_access(fila_id: int):
+    def access_checker(usuario: Usuario = Depends(verificar_token), session: Session = Depends(pegar_sessao)): #type: ignore
+        fila = session.query(Fila).filter(Fila.id == fila_id).first()
+        if not fila:
+            raise HTTPException(status_code=404, detail="Fila não encontrada")
+        estabelecimento_id = fila.estabelecimento_id
+        if usuario.role == Role.owner: #type: ignore
+            estabelecimento = session.query(Estabelecimento).filter(Estabelecimento.id == estabelecimento_id).first()
+            if not estabelecimento or estabelecimento.usuario_id != usuario.id:
+                raise HTTPException(status_code=403, detail="Acesso negado à fila")
+        elif usuario.role == Role.employee:  #type: ignore
+            if usuario.establishment_id != estabelecimento_id:
+                raise HTTPException(status_code=403, detail="Acesso negado à fila")
+        else:
+            raise HTTPException(status_code=403, detail="Acesso negado")
+        return usuario
+    return access_checker
         

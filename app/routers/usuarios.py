@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException  #type: ignore
-from app.models import Usuario
+from app.models import Usuario, Role
 from app.dependencies import pegar_sessao, verificar_token
 from app.main import bcrypt_context, SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from app.schemas import UsuarioSchema, LoginSchema
@@ -11,9 +11,9 @@ from fastapi.security import OAuth2PasswordRequestForm #type: ignore
 router = APIRouter()
 
 # função para criar o token
-def criar_token(usuario_id, duracao_token=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)):
+def criar_token(usuario_id, role, duracao_token=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)):
     data_expiracao = datetime.now(timezone.utc) + duracao_token
-    dic_info = {"sub": str(usuario_id), "exp": data_expiracao}
+    dic_info = {"sub": str(usuario_id), "role": role.value, "exp": data_expiracao}
     enconded_jwt = jwt.encode(dic_info, SECRET_KEY, ALGORITHM) #type: ignore
     return enconded_jwt
 
@@ -22,7 +22,7 @@ def autenticar_usuario(email: str, senha: str, session: Session):
     usuario = session.query(Usuario).filter(Usuario.email==email).first() #type: ignore
     if not usuario:
         return False
-    elif not bcrypt_context.verify(senha, usuario.senha):
+    elif not bcrypt_context.verify(senha, usuario.senha): #type: ignore
         return False
     return usuario
 
@@ -36,13 +36,24 @@ async def home():
 async def registrar_usuario(usuario_schema: UsuarioSchema , session: Session = Depends(pegar_sessao)):
     usuario = session.query(Usuario).filter(Usuario.email==usuario_schema.email).first() #type: ignore
     if usuario:
-        return HTTPException(status_code=400, detail="Usuário já existe!")
+        raise HTTPException(status_code=400, detail="Usuário já existe!")
     else:
-        senha_criptografada = bcrypt_context.hash(usuario_schema.senha) 
-        novo_usuario = Usuario(usuario_schema.nome, usuario_schema.email, senha_criptografada, usuario_schema.ativo, usuario_schema.admin) #type: ignore
+        senha_criptografada = bcrypt_context.hash(usuario_schema.senha)
+        role = usuario_schema.role if usuario_schema.role else Role.usuario
+        ativo = usuario_schema.ativo if usuario_schema.ativo is not None else True
+        admin = usuario_schema.admin if usuario_schema.admin is not None else False
+        novo_usuario = Usuario(
+            usuario_schema.nome,
+            usuario_schema.email,
+            senha_criptografada,
+            ativo,
+            admin,
+            role,
+            usuario_schema.establishment_id
+        ) #type: ignore
         session.add(novo_usuario)
         session.commit()
-        return {"message": f"Usuário registrado com sucesso!{usuario_schema.email}"}
+        return {"message": f"Usuário registrado com sucesso!", "email": usuario_schema.email}
     
 # rota para login e criação do token
 @router.post("/login")
@@ -51,8 +62,8 @@ async def login(login_schema: LoginSchema, session: Session =  Depends(pegar_ses
     if not usuario:
         raise HTTPException(status_code=400, detail="Usuário não encontrado ou dados invalidos!")
     else:
-        access_token = criar_token(usuario.id)
-        refresh_token = criar_token(usuario.id, duracao_token=timedelta(days=1))
+        access_token = criar_token(usuario.id, usuario.role)
+        refresh_token = criar_token(usuario.id, usuario.role, duracao_token=timedelta(days=1))
         return {
             "access_token": access_token, 
             "refresh_token": refresh_token,
@@ -66,7 +77,7 @@ async def login_form(dados_formulario: OAuth2PasswordRequestForm = Depends(), se
     if not usuario:
         raise HTTPException(status_code=400, detail="Usuário não encontrado ou dados invalidos!")
     else:
-        access_token = criar_token(usuario.id)
+        access_token = criar_token(usuario.id, usuario.role)
         return {
             "access_token": access_token, 
             "token_type": "bearer"
@@ -75,7 +86,7 @@ async def login_form(dados_formulario: OAuth2PasswordRequestForm = Depends(), se
 # rota para renovar o token
 @router.get("/refresh")
 async def use_refresh_token(usuario: Usuario = Depends(verificar_token)):
-    access_token = criar_token(usuario.id)
+    access_token = criar_token(usuario.id, usuario.role)
     return {
         "access_token": access_token, 
         "token_type": "bearer"

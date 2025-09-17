@@ -21,34 +21,82 @@
 
 ## 🛠️ Tecnologias utilizadas
 
-- Python 3.12
-- FastAPI
-- Uvicorn
-- Pytest
-- SQLite
-- Pydantic
-- JWT (JSON Web Tokens)
+### Backend
+- **Python 3.12**
+- **FastAPI** - Framework web moderno e rápido
+- **Uvicorn** - Servidor ASGI para FastAPI
+- **SQLAlchemy** - ORM para banco de dados
+- **Alembic** - Migrações de banco de dados
+- **Pydantic** - Validação de dados
+- **SQLite** - Banco de dados (pode ser alterado para PostgreSQL)
+- **JWT (python-jose)** - Autenticação baseada em tokens
+- **Passlib/Bcrypt** - Hash de senhas
+- **python-dotenv** - Variáveis de ambiente
+
+### Frontend
+- **HTML5/CSS3** - Estrutura e estilos das páginas
+- **JavaScript (ES6+)** - Interatividade e comunicação com API
+- **Fetch API** - Requisições HTTP para o backend
+
+### Testes e Desenvolvimento
+- **Pytest** - Framework de testes
+- **Requests** - Biblioteca para testes de API
 
 
 ## 📦 Instalação e execução
 
+### Pré-requisitos
+- Python 3.12 ou superior
+- Git
+
+### Passos de instalação
+
 ```bash
-# Clone o repositório
+# 1. Clone o repositório
 git clone https://github.com/ArthurRodrigues4433/filadigital
 cd filadigital
 
-# Crie e ative o ambiente virtual
+# 2. Crie e ative o ambiente virtual
 python -m venv venv
-.\venv\Scripts\activate
+.\venv\Scripts\activate  # Windows
+# ou
+source venv/bin/activate  # Linux/Mac
 
-# Instale as dependências
+# 3. Instale as dependências
 pip install -r requirements.txt
 
-# Rode o servidor local
+# 4. Configure as variáveis de ambiente (opcional)
+# Crie um arquivo .env na raiz do projeto com:
+# SECRET_KEY=sua_chave_secreta_aqui
+# ALGORITHM=HS256
+# ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# 5. Execute as migrações do banco de dados
+alembic upgrade head
+
+# 6. (Opcional) Popule o banco com dados de exemplo
+python populate_db.py
+
+# 7. Rode o servidor
 uvicorn app.main:app --reload
 ```
 
-A aplicação estará disponível em `http://127.0.0.1:8000`.
+### Acesso à aplicação
+- **Backend API**: `http://127.0.0.1:8000`
+- **Frontend**: `http://127.0.0.1:8000/frontend/index.html`
+- **Documentação API**: `http://127.0.0.1:8000/docs`
+- **Documentação alternativa**: `http://127.0.0.1:8000/redoc`
+
+### Sobre o Frontend
+O frontend é composto por páginas HTML estáticas servidas pelo FastAPI, com JavaScript para interatividade:
+
+- **index.html**: Página inicial com opções de login/registro
+- **dashboard-cliente.html**: Interface para clientes verem suas filas
+- **dashboard-dono.html**: Painel para donos gerenciarem estabelecimentos e filas
+- **dashboard-funcionario.html**: Interface para funcionários chamarem próximos clientes
+- **qrcode.html**: Página para gerar QR codes das filas
+
+O JavaScript em `api.js` e `script.js` gerencia a comunicação com o backend via Fetch API.
 
 
 ## 📚 Documentação da API
@@ -137,10 +185,60 @@ Authorization: Bearer <seu_token>
 ```
 
 
-## 🧪 Executando os testes
+## 🗄️ Gerenciamento do Banco de Dados
+
+### Migrações com Alembic
 
 ```bash
+# Criar uma nova migração
+alembic revision --autogenerate -m "Descrição da migração"
+
+# Aplicar migrações pendentes
+alembic upgrade head
+
+# Ver status das migrações
+alembic current
+
+# Reverter última migração
+alembic downgrade -1
+```
+
+### Scripts de Utilitários
+
+```bash
+# Verificar conteúdo do banco de dados
+python check_db.py
+
+# Popular banco com dados de exemplo
+python populate_db.py
+
+# Testes manuais de API
+python app/testes.py
+```
+
+## 🧪 Executando os testes
+
+### Testes Automatizados
+```bash
+# Executar todos os testes
 pytest -v
+
+# Executar testes específicos
+pytest tests/test_usuarios.py -v
+pytest tests/test_estabelecimentos.py -v
+pytest tests/test_filas.py -v
+
+# Com cobertura
+pytest --cov=app --cov-report=html
+```
+
+### Testes Manuais
+```bash
+# Teste de registro
+python test_registration.py
+
+# Teste de registro via frontend
+python test_frontend_registration.py
 ```
 
 Certifique-se de estar na raiz do projeto e com o ambiente virtual ativado. Os testes estão localizados na pasta `tests/`.
@@ -150,19 +248,75 @@ Certifique-se de estar na raiz do projeto e com o ambiente virtual ativado. Os t
 
 ```
 filadigital/
-├── app/
-│   ├── main.py
-│   ├── models/
-│   ├── routes/
-│   ├── services/
-│   └── ...
-├── tests/
-│   ├── test_usuarios.py
-│   ├── test_filas.py
-│   └── test_estabelecimentos.py
-├── requirements.txt
-├── README.md
-└── LICENSE
+├── app/                          # Código principal do backend
+│   ├── main.py                   # Ponto de entrada da aplicação FastAPI
+│   ├── database.py               # Configuração do banco de dados SQLAlchemy
+│   ├── models.py                 # Modelos de dados (Usuario, Estabelecimento, Fila)
+│   ├── schemas.py                # Schemas Pydantic para validação
+│   ├── services.py               # Lógica de negócio (QueueService, QRCodeService)
+│   ├── dependencies.py           # Dependências compartilhadas (auth, validation)
+│   ├── testes.py                 # Script de testes manuais
+│   └── routers/                  # Rotas da API organizadas por módulo
+│       ├── usuarios.py           # Rotas de usuários (registro, login, auth)
+│       ├── estabelecimentos.py   # Rotas de estabelecimentos (CRUD)
+│       └── filas.py              # Rotas de filas (entrar, sair, gerenciar)
+├── frontend/                     # Interface do usuário
+│   ├── index.html                # Página inicial
+│   ├── resgister.html            # Página de registro
+│   ├── qrcode.html               # Página de QR Code
+│   ├── dashboard-cliente.html    # Dashboard do cliente
+│   ├── dashboard-dono.html       # Dashboard do dono
+│   ├── dashboard-funcionario.html # Dashboard do funcionário
+│   ├── api.js                    # Funções de comunicação com API
+│   ├── script.js                 # Lógica JavaScript principal
+│   ├── style.css                 # Estilos CSS
+│   ├── template_config.json      # Configurações de templates
+│   ├── test-integration.js       # Testes de integração frontend
+│   ├── todo.md                   # Lista de tarefas do frontend
+│   ├── vite.config.js            # Configuração Vite (desenvolvimento)
+│   ├── package.json              # Dependências frontend
+│   ├── pnpm-lock.yaml            # Lock file pnpm
+│   ├── pages/                    # Páginas organizadas
+│   │   ├── dashboard-dono.html
+│   │   └── dashboard-funcionario.html
+│   ├── scripts/                  # Scripts JavaScript
+│   │   └── script.js
+│   ├── style/                    # Arquivos de estilo
+│   │   └── style.css
+│   ├── .gitignore                # Git ignore específico do frontend
+│   ├── .mgx/                     # Cache/pasta temporária
+│   └── .vite/                    # Cache Vite
+├── alembic/                      # Migrações de banco de dados
+│   ├── versions/                 # Arquivos de migração
+│   │   ├── c81609cbe2c4_initial_migration.py
+│   │   ├── 31e41ad995a0_add_role_and_establishment_id_to_.py
+│   │   ├── 7aeaa8396d70_update_role_enum_to_portuguese.py
+│   │   └── 3fbd34cbb378_add_missing_fields.py
+│   ├── env.py                    # Configuração Alembic
+│   ├── script.py.mako            # Template de scripts
+│   └── README                    # Documentação Alembic
+├── tests/                        # Testes automatizados
+│   ├── conftest.py               # Configuração dos testes
+│   ├── test_estabelecimentos.py  # Testes de estabelecimentos
+│   ├── test_filas.py             # Testes de filas
+│   └── test_usuarios.py          # Testes de usuários
+├── .pytest_cache/                # Cache Pytest
+├── .vscode/                      # Configurações VS Code
+├── check_db.py                   # Script para verificar banco de dados
+├── populate_db.py                # Script para popular banco com dados exemplo
+├── test_registration.py          # Teste de registro manual
+├── test_frontend_registration.py # Teste de registro via frontend
+├── filadigital.db.backup         # Backup do banco de dados
+├── login_data.json               # Dados de login exemplo
+├── estabelecimento_data.json     # Dados de estabelecimentos exemplo
+├── fila_data.json                # Dados de filas exemplo
+├── test_data.json                # Dados de teste
+├── test_api.html                 # Página de teste da API
+├── README_INTEGRACAO.md          # Documentação de integração
+├── requirements.txt              # Dependências Python
+├── .gitignore                    # Arquivos ignorados pelo Git
+├── alembic.ini                   # Configuração Alembic
+└── README.md                     # Este arquivo
 ```
 
 

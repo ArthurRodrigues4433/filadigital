@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="https://public-frontend-cos.metadl.com/mgx/img/favicon.png" type="image/png">
+    <title>FilaDigital - Dashboard Proprietário</title>
+    <link rel="stylesheet" href="style/style.css">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <h2>FilaDigital</h2>
+            </div>
+            <div class="nav-menu" id="navMenu">
+                <a href="#" class="nav-link active" onclick="showSection('dashboard')">Dashboard</a>
+                <a href="#" class="nav-link" onclick="showSection('estabelecimentos')">Estabelecimentos</a>
+                <a href="#" class="nav-link" onclick="showSection('funcionarios')">Funcionários</a>
+                <a href="#" class="nav-link" onclick="showSection('filas')">Filas</a>
+                <a href="../index.html" class="nav-link logout">Sair</a>
+            </div>
+            <div class="nav-toggle" id="navToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="container">
+            <header class="page-header">
+                <h1>Dashboard do Proprietário</h1>
+                <p>Gerencie seus estabelecimentos e filas</p>
+            </header>
+
+            <!-- Dashboard Principal -->
+            <section id="dashboard" class="section active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Estabelecimentos</h3>
+                        <div class="stat-number">3</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Filas Ativas</h3>
+                        <div class="stat-number">8</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Pessoas na Fila</h3>
+                        <div class="stat-number">42</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Funcionários</h3>
+                        <div class="stat-number">12</div>
+                    </div>
+                </div>
+
+                <div class="charts-section">
+                    <div class="chart-card">
+                        <h3>Filas por Estabelecimento</h3>
+                        <div class="chart-placeholder">
+                            <p>Gráfico de barras seria exibido aqui</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Estabelecimentos -->
+            <section id="estabelecimentos" class="section">
+                <div class="section-header">
+                    <h2>Meus Estabelecimentos</h2>
+                    <button class="btn btn-primary" onclick="openAddEstablishmentModal()">+ Novo Estabelecimento</button>
+                </div>
+                <div class="establishments-list" id="establishmentsList">
+                    <!-- Lista será gerada dinamicamente -->
+                </div>
+            </section>
+
+            <!-- Funcionários -->
+            <section id="funcionarios" class="section">
+                <div class="section-header">
+                    <h2>Funcionários</h2>
+                    <button class="btn btn-primary" onclick="openAddEmployeeModal()">+ Novo Funcionário</button>
+                </div>
+                <div class="employees-list" id="employeesList">
+                    <!-- Lista será gerada dinamicamente -->
+                </div>
+            </section>
+
+            <!-- Filas -->
+            <section id="filas" class="section">
+                <div class="section-header">
+                    <h2>Gerenciar Filas</h2>
+                    <button class="btn btn-primary" onclick="openAddQueueModal()">+ Nova Fila</button>
+                </div>
+                <div class="queues-list" id="queuesList">
+                    <!-- Lista será gerada dinamicamente -->
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Modal para Novo Estabelecimento -->
+    <div id="addEstablishmentModal" class="modal">
+        <div class="modal-content">
+            <h3>Novo Estabelecimento</h3>
+            <form id="establishmentForm">
+                <div class="form-group">
+                    <label for="establishmentName">Nome do Estabelecimento</label>
+                    <input type="text" id="establishmentName" required>
+                </div>
+                <div class="form-group">
+                    <label for="establishmentAddress">Endereço</label>
+                    <input type="text" id="establishmentAddress" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Criar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Novo Funcionário -->
+    <div id="addEmployeeModal" class="modal">
+        <div class="modal-content">
+            <h3>Novo Funcionário</h3>
+            <form id="employeeForm">
+                <div class="form-group">
+                    <label for="employeeName">Nome</label>
+                    <input type="text" id="employeeName" required>
+                </div>
+                <div class="form-group">
+                    <label for="employeeEmail">Email</label>
+                    <input type="email" id="employeeEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="employeeEstablishment">Estabelecimento</label>
+                    <select id="employeeEstablishment" required>
+                        <option value="">Selecione...</option>
+                        <option value="1">Restaurante ABC</option>
+                        <option value="2">Loja XYZ</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Adicionar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Nova Fila -->
+    <div id="addQueueModal" class="modal">
+        <div class="modal-content">
+            <h3>Nova Fila</h3>
+            <form id="queueForm">
+                <div class="form-group">
+                    <label for="queueName">Nome da Fila</label>
+                    <input type="text" id="queueName" required>
+                </div>
+                <div class="form-group">
+                    <label for="queueEstablishment">Estabelecimento</label>
+                    <select id="queueEstablishment" required>
+                        <option value="">Selecione...</option>
+                        <option value="1">Restaurante ABC</option>
+                        <option value="2">Loja XYZ</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Criar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 FilaDigital. Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <script src="api.js"></script>
+    <script src="scripts/script.js"></script>
+</body>
+
+</html>

@@ -1,13 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException #type: ignore
 from sqlalchemy.orm import Session #type: ignore
-from app.dependencies import pegar_sessao, verificar_token, verificar_dono_fila, impedir_dono_entrar, calcular_ordem, chamar_proximo
+from app.dependencies import pegar_sessao, verificar_token, verificar_dono_fila, impedir_owner_employee_entrar, calcular_ordem, chamar_proximo, require_role, require_establishment_access, require_queue_access
+from app.services import QueueService, QRCodeService, NotificationService, DashboardService
+from app.models import Priority
+from app.models import Role
 from app.schemas import CriarFilaSchema, UsuariosNaFilaSchema
 from app.models import Fila, UsuariosNaFila, Usuario, Estabelecimento
 
 router = APIRouter(dependencies=[Depends(verificar_token)])
 
 @router.get("/")
-async def listar_filas_usuario(session: Session = Depends(pegar_sessao), current_user: Usuario = Depends(verificar_token)):
+async def listar_filas_usuario(session: Session = Depends(pegar_sessao), current_user: Usuario = Depends(require_role(Role.dono))):
     """
     Lista todas as filas dos estabelecimentos do usuário logado
     """
@@ -36,7 +39,7 @@ async def listar_filas_usuario(session: Session = Depends(pegar_sessao), current
     return {"filas": resultado}
 
 @router.get("/disponiveis")
-async def listar_filas_disponiveis(session: Session = Depends(pegar_sessao), current_user: Usuario = Depends(verificar_token)):
+async def listar_filas_disponiveis(session: Session = Depends(pegar_sessao), current_user: Usuario = Depends(require_role(Role.usuario))):
     """
     Lista filas disponíveis de outros estabelecimentos (não do usuário logado)
     """
@@ -65,7 +68,7 @@ async def listar_filas_disponiveis(session: Session = Depends(pegar_sessao), cur
 
 # Rota para criar uma fila
 @router.post("/criar-fila")
-async def criar_fila(criar_fila_schema: CriarFilaSchema, session: Session = Depends(pegar_sessao)):
+async def criar_fila(criar_fila_schema: CriarFilaSchema, session: Session = Depends(pegar_sessao), current_user: Usuario = Depends(require_role(Role.dono))):
     nova_fila = Fila(
         nome = criar_fila_schema.nome, 
         descricao = criar_fila_schema.descricao,
@@ -80,7 +83,7 @@ async def criar_fila(criar_fila_schema: CriarFilaSchema, session: Session = Depe
 
 # Rota para apagar fila completa
 @router.post("/apagar-fila/{fila_id}")
-async def apagar_fila(fila_id: int, session: Session = Depends (pegar_sessao), current_user: Usuario = Depends(verificar_token)):
+async def apagar_fila(fila_id: int, session: Session = Depends (pegar_sessao), current_user: Usuario = Depends(require_role(Role.dono))):
     fila = session.query(Fila).filter(Fila.id == fila_id).first()
     if not fila:
         raise HTTPException(status_code=404, detail="Fila não encontrada")
@@ -108,8 +111,12 @@ async def chamar_proximo_usuario(fila_id: int, session: Session = Depends(pegar_
 
     if not fila:
         raise HTTPException(status_code=404, detail="Fila não encontrada")
-    
-    usuario_chamado = chamar_proximo(fila, session, current_user)
+
+    # Usar o novo service para chamar próximo com prioridades
+    usuario_chamado = QueueService.call_next_customer(fila, session, current_user)
+
+    if not usuario_chamado:
+        raise HTTPException(status_code=404, detail="Não tem mais usuarios aguardando!")
 
     return {
         "message": f"Usuário {usuario_chamado.usuario_id} foi chamado!",
@@ -193,39 +200,71 @@ async def entrar_na_fila(usuarios_na_fila_schema: UsuariosNaFilaSchema, session:
     if not fila:
         raise HTTPException(status_code=404, detail="Fila não encontrada")
 
-    impedir_dono_entrar(fila, current_user) # type: ignore
+    # Usar o service para adicionar com prioridade
+    prioridade = usuarios_na_fila_schema.prioridade or Priority.normal
 
-    # Verificar se o usuário já está nesta fila
-    entrada_existente = session.query(UsuariosNaFila).filter(
-        UsuariosNaFila.usuario_id == current_user.id, # type: ignore
-        UsuariosNaFila.fila_id == fila.id, # type: ignore
-        UsuariosNaFila.status == "aguardando" # type: ignore
-    ).first()
+    try:
+        nova_entrada = QueueService.add_customer_to_queue(fila, current_user, session, prioridade)
 
-    if entrada_existente:
-        raise HTTPException(
-            status_code=400,
-            detail="Você já está nesta fila. Não é possível entrar na mesma fila mais de uma vez."
-        )
+        # Notificar sobre mudança na fila
+        NotificationService.notify_queue_updated(fila, session)
 
-    ordem = calcular_ordem(fila, session) # calcula a ordem automaticamente # type: ignore
+        return {
+            "message": f"Você entrou na fila {fila.id} com sucesso!",
+            "ordem_na_fila": nova_entrada.ordem,
+            "prioridade": prioridade.value,
+            "pessoas_na_frente": nova_entrada.ordem - 1
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
-    nova_entrada = UsuariosNaFila(
-        usuario_id=current_user.id, #type: ignore
-        fila_id=fila.id, #type: ignore
-        ordem=ordem,
-        status="aguardando"
-    )
 
-    session.add(nova_entrada)
-    session.commit()
+# Gerar QR Code para fila presencial
+@router.get("/{fila_id}/qr-code")
+async def gerar_qr_code_fila(fila_id: int, session: Session = Depends(pegar_sessao), current_user: Usuario = Depends(require_role(Role.dono))):
+    fila = session.query(Fila).filter(Fila.id == fila_id).first()
+    if not fila:
+        raise HTTPException(status_code=404, detail="Fila não encontrada")
+
+    # Verificar se o dono tem acesso à fila
+    if fila.estabelecimento.usuario_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Acesso negado à fila")
+
+    # Gerar QR Code
+    qr_code = QRCodeService.generate_queue_qr(fila)
 
     return {
-        "message": f"Você entrou na fila {fila.id} com sucesso!", #type: ignore
-        "ordem_na_fila": ordem,
-        "pessoas_na_frente": ordem - 1
+        "fila_id": fila_id,
+        "fila_nome": fila.nome,
+        "qr_code": qr_code,
+        "estabelecimento": fila.estabelecimento.nome,
+        "validade": "24h"  # Em produção, implementar expiração
     }
 
+# Entrar na fila via QR Code (para clientes presenciais)
+@router.post("/entrar-via-qr")
+async def entrar_via_qr(qr_code: str, session: Session = Depends(pegar_sessao), current_user: Usuario = Depends(verificar_token)):
+    # Validar QR Code e adicionar à fila
+    entrada = QRCodeService.validate_qr_and_add_customer(qr_code, current_user, session, Priority.high)
+
+    if not entrada:
+        raise HTTPException(status_code=400, detail="QR Code inválido ou fila não encontrada")
+
+    return {
+        "message": "Entrada via QR Code realizada com sucesso!",
+        "ordem_na_fila": entrada.ordem,
+        "prioridade": entrada.prioridade.value
+    }
+
+# Dashboard do funcionário
+@router.get("/dashboard-funcionario")
+async def dashboard_funcionario(session: Session = Depends(pegar_sessao), current_user: Usuario = Depends(require_role(Role.funcionario))):
+    return DashboardService.get_employee_dashboard(current_user, session)
+
+# Dashboard do cliente
+@router.get("/dashboard-cliente")
+async def dashboard_cliente(session: Session = Depends(pegar_sessao), current_user: Usuario = Depends(require_role(Role.usuario))):
+    return DashboardService.get_customer_dashboard(current_user, session)
 
 #rodar o test
 '''

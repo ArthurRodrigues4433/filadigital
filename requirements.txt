@@ -6,7 +6,6 @@ uvicorn[standard]==0.29.0
 
 # Banco de dados e ORM
 SQLAlchemy==2.0.30
-psycopg2-binary==2.9.9   # PostgreSQL
 alembic==1.13.1          # migrações
 
 # Validação de dados
@@ -17,11 +16,12 @@ python-jose==3.3.0       # JWT
 passlib[bcrypt]==1.7.4   # hash de senhas e bcrypt
 bcrypt==4.1.2            # suporte extra de hash
 
-# Utilidades
-python-multipart==0.0.9  # upload de arquivos/form-data
+# Utilitários
+python-dotenv==1.0.0     # variáveis de ambiente
+requests==2.31.0         # para testes
 
 #instalação de dependências
 #pip install -r requirements.txt
 
 #rodar o servidor
-#uvicorn main:app --reload
+#uvicorn app.main:app --reload

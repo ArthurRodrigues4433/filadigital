@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="https://public-frontend-cos.metadl.com/mgx/img/favicon.png" type="image/png">
+    <title>FilaDigital - Dashboard Cliente</title>
+    <link rel="stylesheet" href="style/style.css">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <h2>FilaDigital</h2>
+            </div>
+            <div class="nav-menu" id="navMenu">
+                <a href="#" class="nav-link active">Filas</a>
+                <a href="#" class="nav-link" onclick="showSection('historico')">Histórico</a>
+                <a href="qrcode.html" class="nav-link">QR Code</a>
+                <a href="#" onclick="window.FilaDigitalAPI.logout()" class="nav-link logout">Sair</a>
+            </div>
+            <div class="nav-toggle" id="navToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="container">
+            <header class="page-header">
+                <h1>Bem-vindo, Cliente!</h1>
+                <p>Encontre e entre nas filas disponíveis</p>
+            </header>
+
+            <!-- Seção de Filas -->
+            <section id="filas" class="section active">
+                <div class="section-header">
+                    <h2>Filas Disponíveis</h2>
+                    <div class="search-bar">
+                        <input type="text" placeholder="Buscar estabelecimento..." id="searchInput">
+                    </div>
+                </div>
+
+                <div class="cards-grid" id="filasGrid">
+                    <!-- Cards serão gerados dinamicamente -->
+                </div>
+
+                <!-- Status da Fila Atual -->
+                <div class="current-queue" id="currentQueue" style="display: none;">
+                    <h3>Sua Posição Atual</h3>
+                    <div class="queue-status">
+                        <div class="position-info">
+                            <span class="position-number" id="positionNumber">5</span>
+                            <span class="position-label">na fila</span>
+                        </div>
+                        <div class="queue-details">
+                            <p><strong>Estabelecimento:</strong> <span id="currentEstablishment">Restaurante ABC</span></p>
+                            <p><strong>Tempo estimado:</strong> <span id="estimatedTime">15 minutos</span></p>
+                        </div>
+                        <button class="btn btn-danger" onclick="leaveQueue()">Sair da Fila</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Seção de Histórico -->
+            <section id="historico" class="section">
+                <div class="section-header">
+                    <h2>Histórico de Filas</h2>
+                </div>
+                <div class="history-list" id="historyList">
+                    <!-- Histórico será gerado dinamicamente -->
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Modal de Confirmação -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <h3>Entrar na Fila</h3>
+            <p id="confirmMessage">Deseja entrar na fila do Restaurante ABC?</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+                <button class="btn btn-primary" onclick="confirmJoinQueue()">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 FilaDigital. Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <script src="api.js"></script>
+    <script src="scripts/script.js"></script>
+</body>
+
+</html>

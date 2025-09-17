@@ -19,7 +19,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Em produção, especifique os domínios permitidos
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -31,6 +31,11 @@ from fastapi.responses import RedirectResponse
 @app.get("/")
 async def root():
     return RedirectResponse(url="/frontend/index.html")
+
+# Endpoint de teste para verificar conectividade
+@app.get("/api/test")
+async def api_test():
+    return {"message": "API FilaDigital está funcionando!", "status": "ok"}
 
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="usuarios/login-form")

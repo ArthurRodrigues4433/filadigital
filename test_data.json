@@ -1,0 +1,9 @@
+{
+  "nome": "João Owner",
+  "email": "joao@owner.com",
+  "senha": "123456",
+  "ativo": true,
+  "admin": false,
+  "role": "owner",
+  "establishment_id": null
+}
