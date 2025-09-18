@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="https://public-frontend-cos.metadl.com/mgx/img/favicon.png" type="image/png">
     <title>FilaDigital - Dashboard Funcionário</title>
-    <link rel="stylesheet" href="style/style.css">
+    <link rel="stylesheet" href="../css/style.css">
 </head>
 
 <body>
@@ -18,7 +18,7 @@
             <div class="nav-menu" id="navMenu">
                 <a href="#" class="nav-link active" onclick="showSection('filas')">Filas</a>
                 <a href="#" class="nav-link" onclick="showSection('historico')">Histórico</a>
-                <a href="../index.html" class="nav-link logout">Sair</a>
+                <a href="#" onclick="window.FilaDigitalAPI.logout()" class="nav-link logout">Sair</a>
             </div>
             <div class="nav-toggle" id="navToggle">
                 <span></span>
@@ -83,7 +83,7 @@
         </div>
     </footer>
 
-    <script src="api.js"></script>
+    <script src="../js/api.js"></script>
     <script src="scripts/script.js"></script>
 </body>
 

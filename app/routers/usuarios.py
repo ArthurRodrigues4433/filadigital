@@ -1,12 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException  #type: ignore
-from app.models import Usuario, Role
-from app.dependencies import pegar_sessao, verificar_token
-from app.main import bcrypt_context, SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
-from app.schemas import UsuarioSchema, LoginSchema
-from sqlalchemy.orm import Session #type: ignore
-from jose import jwt, JWTError #type: ignore
+# Router para operações de usuários
+# Gerencia registro, login, autenticação e tokens
+
+from fastapi import APIRouter, Depends, HTTPException  # type: ignore
+from sqlalchemy.orm import Session  # type: ignore
+from jose import jwt, JWTError  # type: ignore
 from datetime import datetime, timedelta, timezone
-from fastapi.security import OAuth2PasswordRequestForm #type: ignore
+from fastapi.security import OAuth2PasswordRequestForm  # type: ignore
+from app.models import Usuario, Role
+from app.dependencies import obter_sessao, verificar_token
+from app.config import bcrypt_context, SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
+from app.schemas import UsuarioSchema, LoginSchema
 
 router = APIRouter()
 
@@ -33,7 +36,7 @@ async def home():
 
 # rota para registrar novo usuário
 @router.post("/registrar")
-async def registrar_usuario(usuario_schema: UsuarioSchema , session: Session = Depends(pegar_sessao)):
+async def registrar_usuario(usuario_schema: UsuarioSchema , session: Session = Depends(obter_sessao)):
     usuario = session.query(Usuario).filter(Usuario.email==usuario_schema.email).first() #type: ignore
     if usuario:
         raise HTTPException(status_code=400, detail="Usuário já existe!")
@@ -57,7 +60,7 @@ async def registrar_usuario(usuario_schema: UsuarioSchema , session: Session = D
     
 # rota para login e criação do token
 @router.post("/login")
-async def login(login_schema: LoginSchema, session: Session =  Depends(pegar_sessao)):
+async def login(login_schema: LoginSchema, session: Session =  Depends(obter_sessao)):
     usuario = autenticar_usuario(login_schema.email, login_schema.senha, session)
     if not usuario:
         raise HTTPException(status_code=400, detail="Usuário não encontrado ou dados invalidos!")
@@ -72,7 +75,7 @@ async def login(login_schema: LoginSchema, session: Session =  Depends(pegar_ses
 
 # rota para trocar o token via form data no docs
 @router.post("/login-form")
-async def login_form(dados_formulario: OAuth2PasswordRequestForm = Depends(), session: Session =  Depends(pegar_sessao)):
+async def login_form(dados_formulario: OAuth2PasswordRequestForm = Depends(), session: Session =  Depends(obter_sessao)):
     usuario = autenticar_usuario(dados_formulario.username, dados_formulario.password, session)
     if not usuario:
         raise HTTPException(status_code=400, detail="Usuário não encontrado ou dados invalidos!")

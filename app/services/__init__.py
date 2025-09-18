@@ -1,3 +1,6 @@
+# Serviços de negócio para o sistema FilaDigital
+# Contém lógica complexa para gerenciamento de filas, QR codes e notificações
+
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
 from app.models import Fila, UsuariosNaFila, Usuario, Priority, Role
@@ -15,9 +18,9 @@ class QueueService:
             # Prioridade alta: sempre no topo da fila de alta prioridade
             high_priority_count = session.query(UsuariosNaFila).filter(
                 and_(
-                    UsuariosNaFila.fila_id == fila.id, #type: ignore
-                    UsuariosNaFila.status == "aguardando", #type: ignore
-                    UsuariosNaFila.prioridade == Priority.high #type: ignore
+                    UsuariosNaFila.fila_id == fila.id,  # type: ignore
+                    UsuariosNaFila.status == "aguardando",  # type: ignore
+                    UsuariosNaFila.prioridade == Priority.high  # type: ignore
                 )
             ).count()
             return high_priority_count + 1
@@ -25,17 +28,17 @@ class QueueService:
             # Prioridade normal: após todas as prioridades altas
             high_priority_count = session.query(UsuariosNaFila).filter(
                 and_(
-                    UsuariosNaFila.fila_id == fila.id, #type: ignore
-                    UsuariosNaFila.status == "aguardando", #type: ignore
-                    UsuariosNaFila.prioridade == Priority.high #type: ignore
+                    UsuariosNaFila.fila_id == fila.id,  # type: ignore
+                    UsuariosNaFila.status == "aguardando",  # type: ignore
+                    UsuariosNaFila.prioridade == Priority.high  # type: ignore
                 )
             ).count()
 
             normal_priority_count = session.query(UsuariosNaFila).filter(
                 and_(
-                    UsuariosNaFila.fila_id == fila.id, #type: ignore
-                    UsuariosNaFila.status == "aguardando", #type: ignore
-                    UsuariosNaFila.prioridade == Priority.normal #type: ignore
+                    UsuariosNaFila.fila_id == fila.id,  # type: ignore
+                    UsuariosNaFila.status == "aguardando",  # type: ignore
+                    UsuariosNaFila.prioridade == Priority.normal  # type: ignore
                 )
             ).count()
 
@@ -48,33 +51,33 @@ class QueueService:
         next_customer = session.query(UsuariosNaFila)\
             .filter(
                 and_(
-                    UsuariosNaFila.fila_id == fila.id, #type: ignore
-                    UsuariosNaFila.status == "aguardando", #type: ignore
-                    UsuariosNaFila.prioridade == Priority.high #type: ignore
+                    UsuariosNaFila.fila_id == fila.id,  # type: ignore
+                    UsuariosNaFila.status == "aguardando",  # type: ignore
+                    UsuariosNaFila.prioridade == Priority.high  # type: ignore
                 )
             )\
-            .order_by(UsuariosNaFila.ordem).first() #type: ignore
+            .order_by(UsuariosNaFila.ordem).first()  # type: ignore
 
         # Se não há prioridade alta, pega prioridade normal
         if not next_customer:
             next_customer = session.query(UsuariosNaFila)\
                 .filter(
                     and_(
-                        UsuariosNaFila.fila_id == fila.id, #type: ignore
-                        UsuariosNaFila.status == "aguardando", #type: ignore
-                        UsuariosNaFila.prioridade == Priority.normal #type: ignore
+                        UsuariosNaFila.fila_id == fila.id,  # type: ignore
+                        UsuariosNaFila.status == "aguardando",  # type: ignore
+                        UsuariosNaFila.prioridade == Priority.normal  # type: ignore
                     )
                 )\
-                .order_by(UsuariosNaFila.ordem).first() #type: ignore
+                .order_by(UsuariosNaFila.ordem).first()  # type: ignore
 
         if next_customer:
-            next_customer.status = "atendido" #type: ignore
+            next_customer.status = "atendido"  # type: ignore
             session.commit()
 
             # Recalcula ordens após atendimento
             QueueService.recalculate_orders(fila, session)
 
-        return next_customer  #type: ignore
+        return next_customer  # type: ignore
 
     @staticmethod
     def recalculate_orders(fila: Fila, session: Session):
@@ -83,9 +86,9 @@ class QueueService:
         high_priority_customers = session.query(UsuariosNaFila)\
             .filter(
                 and_(
-                    UsuariosNaFila.fila_id == fila.id, #type: ignore
-                    UsuariosNaFila.status == "aguardando", #type: ignore
-                    UsuariosNaFila.prioridade == Priority.high #type: ignore
+                    UsuariosNaFila.fila_id == fila.id,  # type: ignore
+                    UsuariosNaFila.status == "aguardando",  # type: ignore
+                    UsuariosNaFila.prioridade == Priority.high  # type: ignore
                 )
             )\
             .order_by(UsuariosNaFila.horario_entrada)\
@@ -98,9 +101,9 @@ class QueueService:
         normal_priority_customers = session.query(UsuariosNaFila)\
             .filter(
                 and_(
-                    UsuariosNaFila.fila_id == fila.id, #type: ignore
-                    UsuariosNaFila.status == "aguardando", #type: ignore
-                    UsuariosNaFila.prioridade == Priority.normal #type: ignore
+                    UsuariosNaFila.fila_id == fila.id,  # type: ignore
+                    UsuariosNaFila.status == "aguardando",  # type: ignore
+                    UsuariosNaFila.prioridade == Priority.normal  # type: ignore
                 )
             )\
             .order_by(UsuariosNaFila.horario_entrada)\
@@ -121,9 +124,9 @@ class QueueService:
         # Verifica se já está na fila
         existing_entry = session.query(UsuariosNaFila).filter(
             and_(
-                UsuariosNaFila.usuario_id == usuario.id, #type: ignore
-                UsuariosNaFila.fila_id == fila.id, #type: ignore
-                UsuariosNaFila.status == "aguardando" #type: ignore
+                UsuariosNaFila.usuario_id == usuario.id,  # type: ignore
+                UsuariosNaFila.fila_id == fila.id,  # type: ignore
+                UsuariosNaFila.status == "aguardando"  # type: ignore
             )
         ).first()
 
@@ -135,8 +138,8 @@ class QueueService:
 
         # Cria entrada
         entrada = UsuariosNaFila(
-            usuario_id=usuario.id, #type: ignore
-            fila_id=fila.id, #type: ignore
+            usuario_id=usuario.id,  # type: ignore
+            fila_id=fila.id,  # type: ignore
             ordem=ordem,
             status="aguardando",
             prioridade=priority
@@ -152,24 +155,24 @@ class QueueService:
         """Retorna estatísticas da fila"""
         total_aguardando = session.query(UsuariosNaFila).filter(
             and_(
-                UsuariosNaFila.fila_id == fila.id, #type: ignore
-                UsuariosNaFila.status == "aguardando" #type: ignore
+                UsuariosNaFila.fila_id == fila.id,  # type: ignore
+                UsuariosNaFila.status == "aguardando"  # type: ignore
             )
         ).count()
 
         high_priority_count = session.query(UsuariosNaFila).filter(
             and_(
-                UsuariosNaFila.fila_id == fila.id, #type: ignore
-                UsuariosNaFila.status == "aguardando", #type: ignore
-                UsuariosNaFila.prioridade == Priority.high #type: ignore
-            ) 
+                UsuariosNaFila.fila_id == fila.id,  # type: ignore
+                UsuariosNaFila.status == "aguardando",  # type: ignore
+                UsuariosNaFila.prioridade == Priority.high  # type: ignore
+            )
         ).count()
 
         normal_priority_count = session.query(UsuariosNaFila).filter(
             and_(
-                UsuariosNaFila.fila_id == fila.id, #type: ignore
-                UsuariosNaFila.status == "aguardando", #type: ignore
-                UsuariosNaFila.prioridade == Priority.normal #type: ignore
+                UsuariosNaFila.fila_id == fila.id,  # type: ignore
+                UsuariosNaFila.status == "aguardando",  # type: ignore
+                UsuariosNaFila.prioridade == Priority.normal  # type: ignore
             )
         ).count()
 
@@ -273,10 +276,10 @@ class DashboardService:
     @staticmethod
     def get_employee_dashboard(employee: Usuario, session: Session) -> Dict:
         """Retorna dados para dashboard do funcionário"""
-        if not employee.establishment_id: #type: ignore
+        if not employee.establishment_id:  # type: ignore
             return {"error": "Funcionário não vinculado a estabelecimento"}
 
-        filas = session.query(Fila).filter(Fila.estabelecimento_id == employee.establishment_id).all() #type: ignore
+        filas = session.query(Fila).filter(Fila.estabelecimento_id == employee.establishment_id).all()  # type: ignore
 
         dashboard_data = {
             "filas": [],
@@ -306,15 +309,15 @@ class DashboardService:
         """Retorna dados para dashboard do cliente"""
         posicoes = session.query(UsuariosNaFila).filter(
             and_(
-                UsuariosNaFila.usuario_id == customer.id, #type: ignore
-                UsuariosNaFila.status == "aguardando" #type: ignore
+                UsuariosNaFila.usuario_id == customer.id,  # type: ignore
+                UsuariosNaFila.status == "aguardando"  # type: ignore
             )
         ).all()
 
         historico = session.query(UsuariosNaFila).filter(
             and_(
-                UsuariosNaFila.usuario_id == customer.id, #type: ignore
-                UsuariosNaFila.status != "aguardando" #type: ignore
+                UsuariosNaFila.usuario_id == customer.id,  # type: ignore
+                UsuariosNaFila.status != "aguardando"  # type: ignore
             )
         ).order_by(UsuariosNaFila.horario_entrada.desc()).limit(10).all()
 

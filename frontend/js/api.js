@@ -223,12 +223,21 @@ function logout() {
     authState.refreshToken = null;
     authState.user = null;
 
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
+    localStorage.clear();
 
-    window.location.href = '/frontend/index.html';
+    fetch('/frontend/index.html', { method: 'HEAD' })
+        .then(res => {
+            if (res.ok) {
+                window.location.href = '/frontend/index.html';
+            } else {
+                window.location.href = 'index.html';
+            }
+        })
+        .catch(() => {
+            window.location.href = 'index.html';
+        });
 }
+
 
 // Verificar se usuário está autenticado
 function isAuthenticated() {

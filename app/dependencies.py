@@ -1,21 +1,25 @@
-from app.database import engine
-from app.main import SECRET_KEY, ALGORITHM, oauth2_scheme
-from sqlalchemy.orm import sessionmaker, Session #type: ignore
-from fastapi import Depends, HTTPException #type: ignore
-from app.models import Usuario, Fila, UsuariosNaFila, Estabelecimento, Role
-from jose import jwt, JWTError  #type: ignore
+# Dependências e utilitários da aplicação
+# Funções auxiliares para autenticação, validação e controle de acesso
 
-# cria uma "fábrica" de sessões
+from sqlalchemy.orm import sessionmaker, Session  # type: ignore
+from fastapi import Depends, HTTPException  # type: ignore
+from jose import jwt, JWTError  # type: ignore
+from app.database import engine
+from app.config import SECRET_KEY, ALGORITHM, oauth2_scheme
+from app.models import Usuario, Fila, UsuariosNaFila, Estabelecimento, Role
+
+# Cria uma "fábrica" de sessões do banco de dados
 Session = sessionmaker(bind=engine)
 
-def pegar_sessao():
-    session = Session()   # abre a conexão
+def obter_sessao():
+    """Fornece uma sessão de banco de dados para as rotas"""
+    session = Session()   # Abre a conexão
     try:
-        yield session     # entrega a sessão para a rota
+        yield session     # Entrega a sessão para a rota
     finally:
-        session.close()   # fecha a conexão quando acabar
+        session.close()   # Fecha a conexão quando acabar
 
-def verificar_token(token: str = Depends(oauth2_scheme), session: Session = Depends(pegar_sessao)): #type: ignore
+def verificar_token(token: str = Depends(oauth2_scheme), session: Session = Depends(obter_sessao)):  # type: ignore
     try:
         dic_info = jwt.decode(token, SECRET_KEY, ALGORITHM) #type: ignore
         usuario_id = int(dic_info.get("sub")) #type: ignore
@@ -86,7 +90,7 @@ def require_role(required_role: Role):
 
 # Função para verificar se o usuário é owner ou employee do estabelecimento
 def require_establishment_access(estabelecimento_id: int):
-    def access_checker(usuario: Usuario = Depends(verificar_token), session: Session = Depends(pegar_sessao)): #type: ignore
+    def access_checker(usuario: Usuario = Depends(verificar_token), session: Session = Depends(obter_sessao)):  # type: ignore
         if usuario.role == Role.owner: #type: ignore
             estabelecimento = session.query(Estabelecimento).filter(Estabelecimento.id == estabelecimento_id).first()
             if not estabelecimento or estabelecimento.usuario_id != usuario.id:
@@ -101,7 +105,7 @@ def require_establishment_access(estabelecimento_id: int):
 
 # Função para verificar acesso a fila (owner do estabelecimento ou employee)
 def require_queue_access(fila_id: int):
-    def access_checker(usuario: Usuario = Depends(verificar_token), session: Session = Depends(pegar_sessao)): #type: ignore
+    def access_checker(usuario: Usuario = Depends(verificar_token), session: Session = Depends(obter_sessao)):  # type: ignore
         fila = session.query(Fila).filter(Fila.id == fila_id).first()
         if not fila:
             raise HTTPException(status_code=404, detail="Fila não encontrada")

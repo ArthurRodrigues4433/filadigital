@@ -1,8 +1,12 @@
-from pydantic import BaseModel #type: ignore
+# Schemas Pydantic para validação e serialização de dados
+# Define os modelos de entrada e saída da API
+
+from pydantic import BaseModel  # type: ignore
 from typing import Optional
 from app.models import Role, Priority
 
 class UsuarioSchema(BaseModel):
+    """Schema para criação e validação de usuários"""
     nome: str
     email: str
     senha: str
@@ -15,6 +19,7 @@ class UsuarioSchema(BaseModel):
         from_attributes = True
 
 class EstabelecimentoSchema(BaseModel):
+    """Schema para criação e validação de estabelecimentos"""
     nome: str
     rua: str
     bairro: str
@@ -27,6 +32,7 @@ class EstabelecimentoSchema(BaseModel):
         from_attributes = True
 
 class LoginSchema(BaseModel):
+    """Schema para login de usuários"""
     email: str
     senha: str
 
@@ -34,6 +40,7 @@ class LoginSchema(BaseModel):
         from_attributes = True
 
 class CriarFilaSchema(BaseModel):
+    """Schema para criação de filas"""
     nome: str
     descricao: str
     estabelecimento_id: int
@@ -42,6 +49,7 @@ class CriarFilaSchema(BaseModel):
         from_attributes = True
 
 class UsuariosNaFilaSchema(BaseModel):
+    """Schema para entrada de usuários na fila"""
     usuario_id: int
     fila_id: int
     ordem: int

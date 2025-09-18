@@ -99,6 +99,30 @@ O frontend é composto por páginas HTML estáticas servidas pelo FastAPI, com J
 O JavaScript em `api.js` e `script.js` gerencia a comunicação com o backend via Fetch API.
 
 
+## 🔄 Reestruturação do Projeto
+
+O projeto foi completamente reestruturado para melhor organização e escalabilidade:
+
+### Backend (FastAPI)
+- **Estrutura modular**: Código organizado em diretórios dedicados (`models/`, `schemas/`, `services/`)
+- **Configurações centralizadas**: Arquivo `config.py` com todas as configurações da aplicação
+- **Nomes padronizados**: Funções e variáveis em português para consistência
+- **Comentários explicativos**: Documentação detalhada em todos os arquivos
+- **Separação de responsabilidades**: Lógica de negócio isolada nos services
+
+### Frontend (HTML/CSS/JS)
+- **Organização clara**: Arquivos separados por tipo (`pages/`, `js/`, `css/`, `config/`)
+- **Referências atualizadas**: Todos os links corrigidos após reestruturação
+- **Estrutura escalável**: Fácil adição de novas páginas e funcionalidades
+- **Documentação específica**: `README_FRONTEND.md` com guia completo
+
+### Benefícios da Reestruturação
+- ✅ **Manutenibilidade**: Código mais fácil de entender e modificar
+- ✅ **Escalabilidade**: Estrutura preparada para crescimento
+- ✅ **Organização**: Arquivos agrupados por responsabilidade
+- ✅ **Consistência**: Nomes e padrões uniformes
+- ✅ **Documentação**: Comentários e guias detalhados
+
 ## 📚 Documentação da API
 
 Acesse a documentação interativa gerada automaticamente pelo FastAPI:
@@ -248,44 +272,46 @@ Certifique-se de estar na raiz do projeto e com o ambiente virtual ativado. Os t
 
 ```
 filadigital/
-├── app/                          # Código principal do backend
+├── app/                          # Código principal do backend (reestruturado)
 │   ├── main.py                   # Ponto de entrada da aplicação FastAPI
+│   ├── config.py                 # Configurações centralizadas da aplicação
 │   ├── database.py               # Configuração do banco de dados SQLAlchemy
-│   ├── models.py                 # Modelos de dados (Usuario, Estabelecimento, Fila)
-│   ├── schemas.py                # Schemas Pydantic para validação
-│   ├── services.py               # Lógica de negócio (QueueService, QRCodeService)
 │   ├── dependencies.py           # Dependências compartilhadas (auth, validation)
-│   ├── testes.py                 # Script de testes manuais
+│   ├── __init__.py               # Pacote Python
+│   ├── models/                   # Modelos de dados organizados
+│   │   └── __init__.py           # Usuario, Estabelecimento, Fila, UsuariosNaFila
+│   ├── schemas/                  # Schemas Pydantic para validação
+│   │   └── __init__.py           # UsuarioSchema, EstabelecimentoSchema, etc.
+│   ├── services/                 # Lógica de negócio
+│   │   └── __init__.py           # QueueService, QRCodeService, DashboardService
 │   └── routers/                  # Rotas da API organizadas por módulo
 │       ├── usuarios.py           # Rotas de usuários (registro, login, auth)
 │       ├── estabelecimentos.py   # Rotas de estabelecimentos (CRUD)
 │       └── filas.py              # Rotas de filas (entrar, sair, gerenciar)
-├── frontend/                     # Interface do usuário
-│   ├── index.html                # Página inicial
-│   ├── resgister.html            # Página de registro
-│   ├── qrcode.html               # Página de QR Code
-│   ├── dashboard-cliente.html    # Dashboard do cliente
-│   ├── dashboard-dono.html       # Dashboard do dono
-│   ├── dashboard-funcionario.html # Dashboard do funcionário
-│   ├── api.js                    # Funções de comunicação com API
-│   ├── script.js                 # Lógica JavaScript principal
-│   ├── style.css                 # Estilos CSS
-│   ├── template_config.json      # Configurações de templates
-│   ├── test-integration.js       # Testes de integração frontend
-│   ├── todo.md                   # Lista de tarefas do frontend
-│   ├── vite.config.js            # Configuração Vite (desenvolvimento)
-│   ├── package.json              # Dependências frontend
-│   ├── pnpm-lock.yaml            # Lock file pnpm
-│   ├── pages/                    # Páginas organizadas
-│   │   ├── dashboard-dono.html
-│   │   └── dashboard-funcionario.html
-│   ├── scripts/                  # Scripts JavaScript
-│   │   └── script.js
-│   ├── style/                    # Arquivos de estilo
-│   │   └── style.css
+├── frontend/                     # Interface do usuário (reestruturada)
+│   ├── pages/                    # Páginas HTML organizadas
+│   │   ├── index.html            # Página inicial de login
+│   │   ├── resgister.html        # Página de registro
+│   │   ├── qrcode.html           # Página de QR Code
+│   │   ├── dashboard-cliente.html    # Dashboard do cliente
+│   │   ├── dashboard-dono.html       # Dashboard do dono
+│   │   └── dashboard-funcionario.html # Dashboard do funcionário
+│   ├── js/                       # Arquivos JavaScript
+│   │   ├── api.js                # Funções de comunicação com API
+│   │   ├── script.js             # Lógica JavaScript principal
+│   │   └── test-integration.js   # Testes de integração frontend
+│   ├── css/                      # Arquivos de estilo
+│   │   └── style.css             # Estilos CSS principais
+│   ├── config/                   # Arquivos de configuração
+│   │   ├── package.json          # Dependências Node.js
+│   │   ├── pnpm-lock.yaml        # Lock file pnpm
+│   │   ├── vite.config.js        # Configuração Vite
+│   │   └── template_config.json  # Configurações de templates
+│   ├── utils/                    # Utilitários e documentação
+│   │   └── todo.md               # Lista de tarefas do frontend
+│   ├── assets/                   # Recursos estáticos (imagens, etc.)
 │   ├── .gitignore                # Git ignore específico do frontend
-│   ├── .mgx/                     # Cache/pasta temporária
-│   └── .vite/                    # Cache Vite
+│   └── README_FRONTEND.md        # Documentação específica do frontend
 ├── alembic/                      # Migrações de banco de dados
 │   ├── versions/                 # Arquivos de migração
 │   │   ├── c81609cbe2c4_initial_migration.py
@@ -313,6 +339,7 @@ filadigital/
 ├── test_data.json                # Dados de teste
 ├── test_api.html                 # Página de teste da API
 ├── README_INTEGRACAO.md          # Documentação de integração
+├── README_FRONTEND.md            # Documentação específica do frontend
 ├── requirements.txt              # Dependências Python
 ├── .gitignore                    # Arquivos ignorados pelo Git
 ├── alembic.ini                   # Configuração Alembic

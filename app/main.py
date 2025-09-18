@@ -1,33 +1,36 @@
-from fastapi import FastAPI #type: ignore
-from fastapi.middleware.cors import CORSMiddleware #type: ignore
-from fastapi.staticfiles import StaticFiles #type: ignore
-from passlib.context import CryptContext #type: ignore
-from fastapi.security import OAuth2PasswordBearer #type: ignore
-from dotenv import load_dotenv  #type: ignore
-import os
+# Aplicação principal FastAPI para o sistema FilaDigital
+# Configura a aplicação, middlewares e rotas
 
-load_dotenv()
+from fastapi import FastAPI  # type: ignore
+from fastapi.middleware.cors import CORSMiddleware  # type: ignore
+from fastapi.staticfiles import StaticFiles  # type: ignore
+from fastapi.responses import RedirectResponse
+from app.config import (
+    APP_TITLE,
+    CORS_ORIGINS,
+    CORS_CREDENTIALS,
+    CORS_METHODS,
+    CORS_HEADERS,
+    STATIC_DIRECTORY,
+    STATIC_MOUNT_PATH
+)
 
-SECRET_KEY = os.getenv("SECRET_KEY", "your_secret_key_here")
-ALGORITHM = os.getenv("ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30")) # type: ignore
-
-app = FastAPI(title="FilaDigital")
+# Cria a aplicação FastAPI
+app = FastAPI(title=APP_TITLE)
 
 # Configurar CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Em produção, especifique os domínios permitidos
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
+    allow_origins=CORS_ORIGINS,  # Em produção, especifique os domínios permitidos
+    allow_credentials=CORS_CREDENTIALS,
+    allow_methods=CORS_METHODS,
+    allow_headers=CORS_HEADERS,
 )
 
 # Servir arquivos estáticos do front-end
-app.mount("/frontend", StaticFiles(directory="frontend"), name="frontend")
+app.mount(STATIC_MOUNT_PATH, StaticFiles(directory=STATIC_DIRECTORY), name="frontend")
 
 # Rota para redirecionar para o front-end
-from fastapi.responses import RedirectResponse
 @app.get("/")
 async def root():
     return RedirectResponse(url="/frontend/index.html")
@@ -36,9 +39,6 @@ async def root():
 @app.get("/api/test")
 async def api_test():
     return {"message": "API FilaDigital está funcionando!", "status": "ok"}
-
-bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="usuarios/login-form")
 
 from app.routers import usuarios, estabelecimentos, filas
 from app.database import Base, engine
@@ -50,13 +50,12 @@ app.include_router(usuarios.router, prefix="/usuarios", tags=["Usuários"])
 app.include_router(estabelecimentos.router, prefix="/estabelecimentos", tags=["Estabelecimentos"])
 app.include_router(filas.router, prefix="/filas", tags=["Filas"])
 
-# para rodar o servidor: uvicorn app.main:app --reload
+# Para executar o servidor:
+# uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 
-#ativar ambiente virtual: .\venv\Scripts\activate
+# Para ativar o ambiente virtual:
+# .\venv\Scripts\activate
 
-'''
----testa o codigo---
-
-$env:PYTHONPATH="."
-pytest tests/ --disable-warnings -v
-'''
+# Para executar os testes:
+# $env:PYTHONPATH="."
+# pytest tests/ --disable-warnings -v

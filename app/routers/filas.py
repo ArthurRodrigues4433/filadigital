@@ -1,16 +1,17 @@
-from fastapi import APIRouter, Depends, HTTPException #type: ignore
-from sqlalchemy.orm import Session #type: ignore
-from app.dependencies import pegar_sessao, verificar_token, verificar_dono_fila, impedir_owner_employee_entrar, calcular_ordem, chamar_proximo, require_role, require_establishment_access, require_queue_access
+# Router para operações de filas
+# Gerencia criação, entrada/saída de filas, QR codes e dashboards
+
+from fastapi import APIRouter, Depends, HTTPException  # type: ignore
+from sqlalchemy.orm import Session  # type: ignore
+from app.dependencies import obter_sessao, verificar_token, verificar_dono_fila, impedir_owner_employee_entrar, calcular_ordem, chamar_proximo, require_role, require_establishment_access, require_queue_access
 from app.services import QueueService, QRCodeService, NotificationService, DashboardService
-from app.models import Priority
-from app.models import Role
+from app.models import Priority, Role, Fila, UsuariosNaFila, Usuario, Estabelecimento
 from app.schemas import CriarFilaSchema, UsuariosNaFilaSchema
-from app.models import Fila, UsuariosNaFila, Usuario, Estabelecimento
 
 router = APIRouter(dependencies=[Depends(verificar_token)])
 
 @router.get("/")
-async def listar_filas_usuario(session: Session = Depends(pegar_sessao), current_user: Usuario = Depends(require_role(Role.dono))):
+async def listar_filas_usuario(session: Session = Depends(obter_sessao), current_user: Usuario = Depends(require_role(Role.dono))):
     """
     Lista todas as filas dos estabelecimentos do usuário logado
     """
@@ -39,7 +40,7 @@ async def listar_filas_usuario(session: Session = Depends(pegar_sessao), current
     return {"filas": resultado}
 
 @router.get("/disponiveis")
-async def listar_filas_disponiveis(session: Session = Depends(pegar_sessao), current_user: Usuario = Depends(require_role(Role.usuario))):
+async def listar_filas_disponiveis(session: Session = Depends(obter_sessao), current_user: Usuario = Depends(require_role(Role.usuario))):
     """
     Lista filas disponíveis de outros estabelecimentos (não do usuário logado)
     """
@@ -68,7 +69,7 @@ async def listar_filas_disponiveis(session: Session = Depends(pegar_sessao), cur
 
 # Rota para criar uma fila
 @router.post("/criar-fila")
-async def criar_fila(criar_fila_schema: CriarFilaSchema, session: Session = Depends(pegar_sessao), current_user: Usuario = Depends(require_role(Role.dono))):
+async def criar_fila(criar_fila_schema: CriarFilaSchema, session: Session = Depends(obter_sessao), current_user: Usuario = Depends(require_role(Role.dono))):
     nova_fila = Fila(
         nome = criar_fila_schema.nome, 
         descricao = criar_fila_schema.descricao,
@@ -83,7 +84,7 @@ async def criar_fila(criar_fila_schema: CriarFilaSchema, session: Session = Depe
 
 # Rota para apagar fila completa
 @router.post("/apagar-fila/{fila_id}")
-async def apagar_fila(fila_id: int, session: Session = Depends (pegar_sessao), current_user: Usuario = Depends(require_role(Role.dono))):
+async def apagar_fila(fila_id: int, session: Session = Depends (obter_sessao), current_user: Usuario = Depends(require_role(Role.dono))):
     fila = session.query(Fila).filter(Fila.id == fila_id).first()
     if not fila:
         raise HTTPException(status_code=404, detail="Fila não encontrada")
@@ -106,7 +107,7 @@ async def apagar_fila(fila_id: int, session: Session = Depends (pegar_sessao), c
 
 # Rota para chamar o proximo da fila
 @router.post("/{fila_id}/chamar-proximo")
-async def chamar_proximo_usuario(fila_id: int, session: Session = Depends(pegar_sessao), current_user: Usuario = Depends(verificar_token)):
+async def chamar_proximo_usuario(fila_id: int, session: Session = Depends(obter_sessao), current_user: Usuario = Depends(verificar_token)):
     fila = session.query(Fila).filter(Fila.id == fila_id).first()
 
     if not fila:
@@ -126,7 +127,7 @@ async def chamar_proximo_usuario(fila_id: int, session: Session = Depends(pegar_
 
 # Rota para carregar a posição do usuario
 @router.get("/minha-posicao")
-async def minha_posicao(session: Session = Depends(pegar_sessao), current_user: Usuario = Depends(verificar_token)):
+async def minha_posicao(session: Session = Depends(obter_sessao), current_user: Usuario = Depends(verificar_token)):
     posicoes = session.query(UsuariosNaFila).join(Fila).join(Estabelecimento).filter(
         UsuariosNaFila.usuario_id == current_user.id, # type: ignore
         UsuariosNaFila.status == "aguardando" # type: ignore
@@ -148,7 +149,7 @@ async def minha_posicao(session: Session = Depends(pegar_sessao), current_user: 
 
 # Rota para para pegar o historico de filas
 @router.get("/historico")
-async def historico(session: Session = Depends(pegar_sessao), current_user: Usuario = Depends(verificar_token)):
+async def historico(session: Session = Depends(obter_sessao), current_user: Usuario = Depends(verificar_token)):
 
     historico_entradas = session.query(UsuariosNaFila).join(Fila).join(Estabelecimento).filter(
         UsuariosNaFila.usuario_id == current_user.id, # type: ignore
@@ -176,7 +177,7 @@ async def historico(session: Session = Depends(pegar_sessao), current_user: Usua
 
 # Rota para sair da fila
 @router.delete("/sair-da-fila/{posicao_id}")
-async def sair_da_fila(posicao_id: int, session: Session = Depends(pegar_sessao), current_user: Usuario = Depends(verificar_token)):
+async def sair_da_fila(posicao_id: int, session: Session = Depends(obter_sessao), current_user: Usuario = Depends(verificar_token)):
     # Buscar a entrada na fila
     entrada = session.query(UsuariosNaFila).filter(
         UsuariosNaFila.id == posicao_id, # type: ignore
@@ -195,7 +196,7 @@ async def sair_da_fila(posicao_id: int, session: Session = Depends(pegar_sessao)
 
 # Para entrar usuarios na fila:
 @router.post("/entrar-na-fila")
-async def entrar_na_fila(usuarios_na_fila_schema: UsuariosNaFilaSchema, session: Session = Depends(pegar_sessao), current_user: Usuario = Depends(verificar_token)):
+async def entrar_na_fila(usuarios_na_fila_schema: UsuariosNaFilaSchema, session: Session = Depends(obter_sessao), current_user: Usuario = Depends(verificar_token)):
     fila = session.query(Fila).filter(Fila.id == usuarios_na_fila_schema.fila_id).first() # type: ignore
     if not fila:
         raise HTTPException(status_code=404, detail="Fila não encontrada")
@@ -221,7 +222,7 @@ async def entrar_na_fila(usuarios_na_fila_schema: UsuariosNaFilaSchema, session:
 
 # Gerar QR Code para fila presencial
 @router.get("/{fila_id}/qr-code")
-async def gerar_qr_code_fila(fila_id: int, session: Session = Depends(pegar_sessao), current_user: Usuario = Depends(require_role(Role.dono))):
+async def gerar_qr_code_fila(fila_id: int, session: Session = Depends(obter_sessao), current_user: Usuario = Depends(require_role(Role.dono))):
     fila = session.query(Fila).filter(Fila.id == fila_id).first()
     if not fila:
         raise HTTPException(status_code=404, detail="Fila não encontrada")
@@ -243,7 +244,7 @@ async def gerar_qr_code_fila(fila_id: int, session: Session = Depends(pegar_sess
 
 # Entrar na fila via QR Code (para clientes presenciais)
 @router.post("/entrar-via-qr")
-async def entrar_via_qr(qr_code: str, session: Session = Depends(pegar_sessao), current_user: Usuario = Depends(verificar_token)):
+async def entrar_via_qr(qr_code: str, session: Session = Depends(obter_sessao), current_user: Usuario = Depends(verificar_token)):
     # Validar QR Code e adicionar à fila
     entrada = QRCodeService.validate_qr_and_add_customer(qr_code, current_user, session, Priority.high)
 
@@ -258,12 +259,12 @@ async def entrar_via_qr(qr_code: str, session: Session = Depends(pegar_sessao), 
 
 # Dashboard do funcionário
 @router.get("/dashboard-funcionario")
-async def dashboard_funcionario(session: Session = Depends(pegar_sessao), current_user: Usuario = Depends(require_role(Role.funcionario))):
+async def dashboard_funcionario(session: Session = Depends(obter_sessao), current_user: Usuario = Depends(require_role(Role.funcionario))):
     return DashboardService.get_employee_dashboard(current_user, session)
 
 # Dashboard do cliente
 @router.get("/dashboard-cliente")
-async def dashboard_cliente(session: Session = Depends(pegar_sessao), current_user: Usuario = Depends(require_role(Role.usuario))):
+async def dashboard_cliente(session: Session = Depends(obter_sessao), current_user: Usuario = Depends(require_role(Role.usuario))):
     return DashboardService.get_customer_dashboard(current_user, session)
 
 #rodar o test

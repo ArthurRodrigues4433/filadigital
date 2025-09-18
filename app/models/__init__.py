@@ -1,5 +1,8 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime, Enum #type: ignore
-from sqlalchemy.orm import relationship #type: ignore
+# Modelos de dados para o sistema FilaDigital
+# Define as tabelas do banco de dados usando SQLAlchemy
+
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime, Enum  # type: ignore
+from sqlalchemy.orm import relationship  # type: ignore
 from datetime import datetime
 from app.database import Base
 import enum
